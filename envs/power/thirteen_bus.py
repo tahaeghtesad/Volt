@@ -10,7 +10,7 @@ class ThirteenBus(gym.Env):
             start = time.time()
             print('Starting matlab engine...')
             self.engine = matlab.engine.start_matlab()
-            self.engine.addpath(self.engine.genpath('./distopt'))
+            self.engine.addpath(self.engine.genpath('./matlab'))
 
             print(f'Matlab engine started in {time.time() - start:.2f} seconds.')
         else:
