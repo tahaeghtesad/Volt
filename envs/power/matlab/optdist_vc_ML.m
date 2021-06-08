@@ -1,4 +1,15 @@
-function [var] = optdist_vc_ML(T,Data,G,t,var)
+function [var] = optdist_vc_ML(params, t)
+
+    global g_data
+    global g_T
+    global g_G
+    global g_var
+
+Data = g_data;
+T = g_T
+G = g_G
+var = g_var
+
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -37,9 +48,9 @@ n = size(q_un,1); % number of controllable nodes
 v_un=G.C*v_un;
 v_bar=G.C*v_bar;
 % step sizes
-alpha = Data.alpha;
-beta = Data.beta;
-gamma = Data.gamma;
+alpha = params.alpha;
+beta = params.beta;
+gamma = params.gamma;
     
 % if(nargin>=13)
 %     noise_flag=1;
@@ -57,7 +68,7 @@ control_flag=1;
 
 
 
-c=Data.c;% parameter for augmented Lagrangian
+c=params.c;% parameter for augmented Lagrangian
 
 % projection functions
 proj0 = @(r) max(r,zeros(size(r)));
@@ -218,7 +229,6 @@ f_func = @(qqq) sum(1/2*a.*(qqq.^2) + b.*qqq);
 %Q=q;
 %fes=fes;
 %f=f;
-
 
 end
 

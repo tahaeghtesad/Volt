@@ -3,8 +3,6 @@
 % Without capacitors and regulators
 clc;close all;
 
-
-
 % NETWORK
 % MODEL.............................................................................
 % network data
@@ -159,3 +157,22 @@ G.Y_control=Y;
 
 % size of network
 n = size(Data.q_un_vec,1); % number of controllable nodes
+
+var.q_hat = zeros(n,T); % ''virtual'' reactive power
+var.xi = zeros(n,T); % lagrangian multiplier for reactive power constraint
+var.lambda_bar = zeros(n,T); % lagrangian multipler for voltage constraint (upper limit)
+var.lambda_un = zeros(n,T); % lagrangian multipler for voltage constraint (lower limit)
+var.v = zeros(n,T); % voltage
+var.q = zeros(n,T); % ''actual'' reactive power
+var.f = zeros(1,T); % objective function value
+var.fes = zeros(1,T); % feasibility of solution
+
+global g_data
+global g_T
+global g_G
+global g_var
+
+g_data = Data
+g_T = T
+g_G = G
+g_var = var

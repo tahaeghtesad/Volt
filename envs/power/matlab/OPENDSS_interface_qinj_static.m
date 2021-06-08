@@ -7,7 +7,7 @@ function [V_phase_OPENDSS] = OPENDSS_interface_qinj_static(t,load_var,q_inj,Data
 if DSSStartOK
 
 DSSObj.AllowForms = false;
-DSSText.Command = 'Set DataPath =C:\Users\Niloy\Dropbox\NILOY\ML_for_hyperparameter_tuning\Algorithm1_three_phase_extension\IEEE13_bus_ML';
+DSSText.Command = 'Set DataPath =C:\Users\Taha\PycharmProjects\Volt\envs\power\matlab';
 DSSText.Command = 'Compile IEEE13Nodeckt.dss';   
 lm=load_var;
 % lm=1.2;
