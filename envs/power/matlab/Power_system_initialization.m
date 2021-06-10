@@ -1,7 +1,6 @@
 % OPTDIST VC for 13 bus system
 % Algorithm 1 Three Phase Model
 % Without capacitors and regulators
-clc;close all;
 
 % NETWORK
 % MODEL.............................................................................
@@ -35,7 +34,6 @@ Data.q_bar = +1;% upper limit for q
 Data.q_un  = -1; % lower limit for q
 
  Data.load_var = 1; % 100% loading
- T=10000; % Number of iterations
 
  % Defining the simulation case
 simu_case = 'static';  % static or dynamic  or static_param(paramter sensitivity under static conditions)

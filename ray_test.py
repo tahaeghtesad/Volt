@@ -8,8 +8,9 @@ register_env("volt", lambda config: ThirteenBus(config))
 
 tune.run(DDPGTrainer, config={"env": "volt",
                               "log_level": "INFO",
-                              'buffer_size': 5000,
-                              # "num_gpus": 1,
-                              # "num_workers": 4,
+                              # 'buffer_size': 5000,
+                              "num_gpus": 0,
+                              "num_workers": 15,
+                              "framework": 'tfe'
                               })
 

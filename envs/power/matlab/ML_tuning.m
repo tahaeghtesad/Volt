@@ -10,17 +10,17 @@ var.f = zeros(1,T); % objective function value
 var.fes = zeros(1,T); % feasibility of solution
 % Algorithm parameters
 for t=1:T
-Data.alpha = 0.001*ones(n,1);
-Data.beta = 5*ones(n,1);
-Data.gamma = 200*ones(n,1);
-Data.c=1*ones(n,1);
+alpha = 0.001*ones(n,1);
+beta = 5*ones(n,1);
+gamma = 200*ones(n,1);
+c=1*ones(n,1);
 
 
 
 
 % [v,v_phase,v_c,v_c_phase, q,fes,f,lambda_bar,lambda_un,xi,q_hat] = Input_parameter(Data,G,T,t);
 
-[var] = optdist_vc_ML(T,Data,G,t,var);
+[var] = step(alpha, beta, gamma, c, t);
 end
 
 % PLOTS%................
