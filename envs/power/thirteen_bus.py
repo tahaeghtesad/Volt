@@ -70,3 +70,6 @@ class ThirteenBus(gym.Env):
 
     def render(self, mode='human'):
         raise NotImplementedError()
+
+    def close(self):
+        self.engine.quit()
