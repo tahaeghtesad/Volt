@@ -39,10 +39,10 @@ class ServerThread(Thread):
                     self.env.close()
                     break
 
-        except socket.error:
+        except ConnectionError:
             print(f'Client disconnected.')
+            self.messenger.conn.close()
             self.env.close()
-            pass
 
 
 if __name__ == '__main__':
@@ -58,8 +58,13 @@ if __name__ == '__main__':
         print(f'Client Connected {addr}')
         messenger = Messenger(conn)
 
-        info = messenger.get_message()
-        assert info['event'] == 'start'
+        try:
+            info = messenger.get_message()
+            assert info['event'] == 'start'
 
-        thread = ServerThread(messenger, info['env_params'])
-        thread.start()
+
+            thread = ServerThread(messenger, info['env_params'])
+            thread.start()
+
+        except ConnectionError:
+            print('Client disconnected.')

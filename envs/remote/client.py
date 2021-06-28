@@ -13,7 +13,7 @@ class RemoteEnv(gym.Env):
         conn.connect((host, port))
         self.messenger = Messenger(conn)
 
-        self.messenger.send_message(dict(env_params=dict(event='start')))
+        self.messenger.send_message(dict(event='start', env_params=dict()))
 
         env_info = self.messenger.get_message()
         self.action_space = env_info['action_space']
