@@ -73,3 +73,4 @@ class ThirteenBus(gym.Env):
 
     def close(self):
         self.engine.quit()
+        print('Matlab closed.')

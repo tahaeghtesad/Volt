@@ -33,7 +33,13 @@ class ServerThread(Thread):
                     obs = self.env.reset()
                     self.messenger.send_message(dict(obs=obs))
 
-        except ConnectionResetError:
+                if message['event'] == 'close':
+                    print('Connection closed.')
+                    self.messenger.conn.close()
+                    self.env.close()
+                    break
+
+        except socket.error:
             print(f'Client disconnected.')
             self.env.close()
             pass
@@ -53,7 +59,7 @@ if __name__ == '__main__':
         messenger = Messenger(conn)
 
         info = messenger.get_message()
-        print(info)
+        assert info['event'] == 'start'
 
         thread = ServerThread(messenger, info['env_params'])
         thread.start()
