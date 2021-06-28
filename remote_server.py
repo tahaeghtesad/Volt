@@ -26,7 +26,6 @@ class ServerThread(Thread):
                 message = self.messenger.get_message()
 
                 if message['event'] == 'step':
-                    print(message['data'])
                     obs, reward, done, info = self.env.step(message['data'])
                     self.messenger.send_message(dict(obs=obs, reward=reward, done=done, info=info))
 

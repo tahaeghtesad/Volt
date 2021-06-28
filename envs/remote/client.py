@@ -42,4 +42,5 @@ class RemoteEnv(gym.Env):
 
 if __name__ == '__main__':
     env = RemoteEnv('localhost', 6985)
+    env.reset()
     env.step(env.action_space.sample())
