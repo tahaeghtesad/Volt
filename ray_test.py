@@ -18,3 +18,5 @@ config.update(dict(
     num_workers=7,
     num_gpus=0,
 ))
+
+tune.run(ddpg.DDPGTrainer, config=config)
