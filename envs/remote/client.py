@@ -8,7 +8,7 @@ from util.network_util import Messenger
 
 class RemoteEnv(gym.Env):
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, config):
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         conn.connect((host, port))
         self.messenger = Messenger(conn)
@@ -41,6 +41,6 @@ class RemoteEnv(gym.Env):
 
 
 if __name__ == '__main__':
-    env = RemoteEnv('localhost', 6985)
+    env = RemoteEnv('localhost', 6985, None)
     env.reset()
     env.step(env.action_space.sample())
