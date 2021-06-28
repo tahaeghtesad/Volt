@@ -13,9 +13,10 @@ register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
 
 config = ddpg.DEFAULT_CONFIG.copy()
 config.update(dict(
+    env='volt',
     log_level=logging.INFO,
-    # framework='tfe',
-    num_workers=7,
+    framework='tfe',
+    num_workers=8,
     num_gpus=0,
 ))
 
