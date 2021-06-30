@@ -22,7 +22,7 @@ config.update({
     'env': 'volt',
     'log_level': logging.INFO,
     'framework': 'tfe',
-    'num_workers=16'
+    'num_workers': 16,
     'num_gpus': 1,
 })
 
