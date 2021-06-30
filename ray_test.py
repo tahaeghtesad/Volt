@@ -162,7 +162,7 @@ config.update({
     "min_iter_time_s": 1,
 
     # Number of GPU
-    "num_gpu": 1,
+    "num_gpus": 1,
 
     'log_level': logging.INFO
 })
