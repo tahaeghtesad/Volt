@@ -8,17 +8,18 @@ import json
 
 from _socket import gethostbyname
 
+from envs.power.single_node import SingleNode
 from envs.power.thirteen_bus import ThirteenBus
 from util.network_util import Messenger
 
 
 class ServerThread(Thread):
-    def __init__(self, messenger: Messenger, env_params: dict, **kwargs) -> None:
+    def __init__(self, messenger: Messenger, info: dict, **kwargs) -> None:
         super().__init__(**kwargs)
         self.messenger = messenger
-        self.env = ThirteenBus(env_params)
+        self.env = SingleNode(0, info['env_params'])
 
-        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space))
+        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.T))
 
     def run(self) -> None:
         try:
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     port = int(sys.argv[1])
     socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     socket.bind(('localhost', port))
-    socket.listen(16)
+    socket.listen(64)
 
     print(f'Listening on port {port}')
 
@@ -62,8 +63,7 @@ if __name__ == '__main__':
             info = messenger.get_message()
             assert info['event'] == 'start'
 
-
-            thread = ServerThread(messenger, info['env_params'])
+            thread = ServerThread(messenger, info)
             thread.start()
 
         except ConnectionError:
