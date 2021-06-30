@@ -21,6 +21,9 @@ config = ddpg.DEFAULT_CONFIG.copy()
 # })
 
 config.update({
+
+    'env': 'volt',
+
     # === Twin Delayed DDPG (TD3) and Soft Actor-Critic (SAC) tricks ===
     # TD3: https://spinningup.openai.com/en/latest/algorithms/td3.html
     # In addition to settings below, you can use "exploration_noise_type" and
@@ -160,6 +163,8 @@ config.update({
 
     # Number of GPU
     "num_gpu": 1,
+
+    'log_level': logging.INFO
 })
 
 try:
