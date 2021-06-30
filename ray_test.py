@@ -165,4 +165,4 @@ config.update({
 try:
     tune.run(ddpg.DDPGTrainer, config=config)
 except KeyboardInterrupt:
-    ray.kill()
+    ray.shutdown()
