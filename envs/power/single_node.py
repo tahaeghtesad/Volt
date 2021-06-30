@@ -8,8 +8,8 @@ class SingleNode(gym.Env):
     def __init__(self, index, config):
         self.env = ThirteenBus(config)
         self.index = index
-        self.action_space = gym.spaces.Box(0, 10_000, (4, 1))
-        self.observation_space = gym.spaces.Box(-10_000, 10_000, (2, 1))
+        self.action_space = gym.spaces.Box(0, 10_000, (4,))
+        self.observation_space = gym.spaces.Box(-10_000, 10_000, (2,))
 
         self.alpha = 0.001
         self.beta = 5
