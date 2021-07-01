@@ -5,7 +5,7 @@ from ray import tune
 import ray.rllib.agents.ddpg as ddpg
 from ray.tune import register_env, Stopper, ExperimentAnalysis
 from ray.tune.logger import pretty_print
-from ray.tune.stopper import TrialPlateauStopper
+from ray.tune.stopper import TrialPlateauStopper, MaximumIterationStopper
 from tqdm import tqdm
 
 from envs.remote.client import RemoteEnv
@@ -156,19 +156,24 @@ config.update({
     # Number of workers for collecting samples with. This only makes sense
     # to increase if your environment is particularly slow to sample, or if
     # you're using the Async or Ape-X optimizers.
-    "num_workers": 1,
+    "num_workers": 4,
     # Whether to compute priorities on workers.
     "worker_side_prioritization": False,
     # Prevent iterations from going lower than this time span
     "min_iter_time_s": 1,
 
     # Number of GPU
-    "num_gpus": 0.0001,
+    "num_gpus": 1/4,
 
     'log_level': logging.INFO
 })
 
 try:
-    result = tune.run(ddpg.DDPGTrainer, stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000), config=config)
+    result = tune.run(
+        ddpg.DDPGTrainer,
+        # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
+        stop=MaximumIterationStopper(500_000),
+        config=config
+    )
 except KeyboardInterrupt:
     ray.shutdown()
