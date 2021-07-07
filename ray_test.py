@@ -173,7 +173,8 @@ try:
         ddpg.DDPGTrainer,
         # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
         stop=MaximumIterationStopper(500_000),
-        config=config
+        config=config,
+        reuse_actors=True
     )
 except KeyboardInterrupt:
     ray.shutdown()

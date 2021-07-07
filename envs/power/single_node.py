@@ -9,7 +9,7 @@ class SingleNode(gym.Env):
         self.env = ThirteenBus(config)
         self.index = index
         self.action_space = gym.spaces.Box(0, 10_000, (4,))
-        self.observation_space = gym.spaces.Box(-10_000, 10_000, (2,))
+        self.observation_space = gym.spaces.Box(-10_000, 10_000, (3,))
 
         self.alpha = 0.001
         self.beta = 5
@@ -20,8 +20,8 @@ class SingleNode(gym.Env):
         self.T = self.env.T
 
     def reset(self):
-        full_obs = self.env.reset()
-        return np.array([full_obs[self.index], full_obs[-1]])
+        self.env.reset()
+        return np.array([0., 0., 0.])
 
     def step(self, action: np.ndarray):
         full_action = np.concatenate((
@@ -38,7 +38,10 @@ class SingleNode(gym.Env):
 
         full_obs, reward, done, info = self.env.step(full_action)
 
-        return np.array([full_obs[self.index], full_obs[-1]]), - info['q'][self.index][0] - info['fes'], done, info
+        return np.array([full_obs[self.env.n * 0 + self.index],
+                         full_obs[self.env.n * 1 + self.index],
+                         full_obs[-1]]
+                        ), reward, done, info
 
     def render(self, mode='human'):
         raise NotImplementedError()

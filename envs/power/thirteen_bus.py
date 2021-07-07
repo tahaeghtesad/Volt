@@ -23,7 +23,7 @@ class ThirteenBus(gym.Env):
 
         self.null_stream = io.StringIO()
 
-        self.T = self.engine.workspace['T'] = 1000
+        self.T = self.engine.workspace['T'] = 500
         # self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         # self.n = int(self.engine.workspace['n'])
@@ -33,7 +33,9 @@ class ThirteenBus(gym.Env):
         self.episode = 0
 
         self.action_space = gym.spaces.Box(0, 10000, (4 * self.n,))
-        self.observation_space = gym.spaces.Box(-10000, 10000, (self.n + 1,))
+        self.observation_space = gym.spaces.Box(-10000, 10000, (2 * self.n + 1,))
+
+        self.reward_history = []
 
     def reset(self):
         self.episode += 1
@@ -42,7 +44,9 @@ class ThirteenBus(gym.Env):
         self.engine.eval('clc', nargout=0)
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
-        return np.concatenate((np.zeros((self.n, 1)).flatten(), np.zeros((1, ))))
+        self.reward_history = []
+
+        return np.concatenate((np.zeros((self.n * 2, 1)).flatten(), np.zeros((1, ))))
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         self.step_number += 1
@@ -56,10 +60,15 @@ class ThirteenBus(gym.Env):
         q = np.array(var['q'], dtype=np.float)
         fes = np.array([var['fes']], dtype=np.float)
 
-        obs = np.concatenate((v.flatten(), fes))
-        q_norm = np.linalg.norm(q)
-        reward = -q_norm - fes[0]
-        done = self.step_number == self.T
+        obs = np.concatenate((v.flatten(), q.flatten(), fes))
+        # q_norm = np.linalg.norm(q)
+        # reward = -q_norm - fes[0]
+        reward = - fes[0]
+        self.reward_history.append(reward)
+        if len(self.reward_history) > 32:
+            del self.reward_history[0]
+
+        done = self.step_number == self.T or (reward > -0.1 and np.abs(np.mean(np.array(self.reward_history)) - reward) < 0.0001)
 
         # if done:
         #     print(f'Step: {self.step_number}')
