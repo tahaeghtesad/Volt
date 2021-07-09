@@ -156,14 +156,14 @@ config.update({
     # Number of workers for collecting samples with. This only makes sense
     # to increase if your environment is particularly slow to sample, or if
     # you're using the Async or Ape-X optimizers.
-    "num_workers": 4,
+    "num_workers": 5,
     # Whether to compute priorities on workers.
     "worker_side_prioritization": False,
     # Prevent iterations from going lower than this time span
     "min_iter_time_s": 1,
 
     # Number of GPU
-    "num_gpus": 1/4,
+    "num_gpus": 1/3,
 
     'log_level': logging.INFO
 })
@@ -172,9 +172,11 @@ try:
     result = tune.run(
         ddpg.DDPGTrainer,
         # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
-        stop=MaximumIterationStopper(500_000),
+        stop=MaximumIterationStopper(300_000),
         config=config,
-        reuse_actors=True
+        reuse_actors=True,
+        checkpoint_freq=50,
+        checkpoint_at_end=True
     )
 except KeyboardInterrupt:
     ray.shutdown()
