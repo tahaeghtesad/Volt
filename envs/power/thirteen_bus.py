@@ -7,23 +7,27 @@ import time
 import matlab.engine
 import numpy as np
 
+import logging
+
 
 class ThirteenBus(gym.Env):
     def __init__(self, env_config):
+        self.logger = logging.getLogger(__name__)
+
         # if engine is None:
         self.env_config = env_config
         start = time.time()
-        print('Starting matlab engine...')
+        self.logger.info('Starting matlab engine...')
         self.engine = matlab.engine.start_matlab()
-        self.engine.addpath('C:\\Users\\Taha\\PycharmProjects\\Volt\\envs\\power\\matlab')
+        self.engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\matlab')
 
-        print(f'Matlab engine started in {time.time() - start:.2f} seconds.')
+        self.logger.info(f'Matlab engine started in {time.time() - start:.2f} seconds.')
         # else:
         #     self.engine = engine
 
         self.null_stream = io.StringIO()
 
-        self.T = self.engine.workspace['T'] = 500
+        self.T = 500
         # self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         # self.n = int(self.engine.workspace['n'])
@@ -42,6 +46,7 @@ class ThirteenBus(gym.Env):
         self.step_number = 0
 
         self.engine.eval('clc', nargout=0)
+        self.engine.workspace['T'] = self.T
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         self.reward_history = []
@@ -82,4 +87,4 @@ class ThirteenBus(gym.Env):
 
     def close(self):
         self.engine.quit()
-        print('Matlab closed.')
+        self.logger.info('Matlab closed.')

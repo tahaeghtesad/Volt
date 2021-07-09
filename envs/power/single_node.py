@@ -43,5 +43,11 @@ class SingleNode(gym.Env):
                          full_obs[-1]]
                         ), reward, done, info
 
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        self.env.close()
+
     def render(self, mode='human'):
         raise NotImplementedError()

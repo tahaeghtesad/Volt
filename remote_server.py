@@ -1,3 +1,4 @@
+import logging
 import socket
 import struct
 import sys
@@ -16,12 +17,14 @@ from util.network_util import Messenger
 class ServerThread(Thread):
     def __init__(self, messenger: Messenger, info: dict, **kwargs) -> None:
         super().__init__(**kwargs)
+        self.logger = logging.getLogger(__name__)
         self.messenger = messenger
-        self.env = SingleNode(0, info['env_params'])
-
-        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.T))
+        self.info = info
 
     def run(self) -> None:
+        self.env = SingleNode(0, self.info['env_params'])
+        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.T))
+
         try:
             while True:
                 message = self.messenger.get_message()
@@ -35,28 +38,29 @@ class ServerThread(Thread):
                     self.messenger.send_message(dict(obs=obs))
 
                 if message['event'] == 'close':
-                    print('Connection closed.')
+                    self.logger.info('Connection closed.')
                     self.messenger.conn.close()
                     self.env.close()
                     break
 
         except ConnectionError:
-            print(f'Client disconnected.')
+            self.logger.error(f'Client disconnected.')
             self.messenger.conn.close()
             self.env.close()
 
 
 if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s', level=logging.INFO)
     port = int(sys.argv[1])
     socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     socket.bind(('localhost', port))
     socket.listen(64)
 
-    print(f'Listening on port {port}')
+    logging.info(f'Listening on port {port}')
 
     while True:
         conn, addr = socket.accept()
-        print(f'Client Connected {addr}')
+        logging.info(f'Client Connected {addr}')
         messenger = Messenger(conn)
 
         try:
@@ -67,4 +71,4 @@ if __name__ == '__main__':
             thread.start()
 
         except ConnectionError:
-            print('Client disconnected.')
+            logging.error('Client disconnected.')
