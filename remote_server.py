@@ -20,31 +20,33 @@ class ServerThread(Thread):
         self.logger = logging.getLogger(__name__)
         self.messenger = messenger
         self.info = info
+        self.finished = False
 
     def run(self) -> None:
         self.env = SingleNode(0, self.info['env_params'])
         self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.T))
 
         try:
-            while True:
+            while not self.finished:
                 message = self.messenger.get_message()
 
                 if message['event'] == 'step':
                     obs, reward, done, info = self.env.step(message['data'])
                     self.messenger.send_message(dict(obs=obs, reward=reward, done=done, info=info))
 
-                if message['event'] == 'reset':
+                elif message['event'] == 'reset':
                     obs = self.env.reset()
                     self.messenger.send_message(dict(obs=obs))
 
-                if message['event'] == 'close':
+                elif message['event'] == 'close':
                     self.logger.info('Connection closed.')
                     self.messenger.conn.close()
                     self.env.close()
-                    break
+                    self.finished = True
 
         except ConnectionError:
             self.logger.error(f'Client disconnected.')
+            self.finished = True
             self.messenger.conn.close()
             self.env.close()
 

@@ -7,12 +7,15 @@ class Messenger:
     def __init__(self, conn) -> None:
         super().__init__()
         self.conn = conn
-        self.conn.settimeout(1800)
+        self.conn.settimeout(30)
 
     def read_bytes(self, size):
         buff = b''
         while len(buff) < size:
-            buff += self.conn.recv(size - len(buff))
+            recv = self.conn.recv(size - len(buff))
+            if recv == b'':
+                raise ConnectionError('Socket Broken.')
+            buff += recv
         return buff
 
     def get_message(self):
@@ -24,5 +27,8 @@ class Messenger:
     def send_message(self, message):
         buff = pickle.dumps(message)
         size = struct.pack('!i', len(buff))
-        self.conn.send(size)
-        self.conn.send(buff)
+        count =  self.conn.send(size)
+        count += self.conn.send(buff)
+
+        if count == 0:
+            raise ConnectionError('Socket Broken.')

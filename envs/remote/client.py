@@ -37,9 +37,6 @@ class RemoteEnv(gym.Env):
         self.messenger.send_message(dict(event='close'))
         self.messenger.conn.close()
 
-    def __del__(self):
-        self.close()
-
     def render(self, mode='human'):
         raise NotImplementedError()
 

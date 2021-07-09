@@ -13,6 +13,7 @@ import logging
 class ThirteenBus(gym.Env):
     def __init__(self, env_config):
         self.logger = logging.getLogger(__name__)
+        self.matlab_running = False
 
         # if engine is None:
         self.env_config = env_config
@@ -20,6 +21,7 @@ class ThirteenBus(gym.Env):
         self.logger.info('Starting matlab engine...')
         self.engine = matlab.engine.start_matlab()
         self.engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\matlab')
+        self.matlab_running = True
 
         self.logger.info(f'Matlab engine started in {time.time() - start:.2f} seconds.')
         # else:
@@ -86,5 +88,7 @@ class ThirteenBus(gym.Env):
         raise NotImplementedError()
 
     def close(self):
-        self.engine.quit()
-        self.logger.info('Matlab closed.')
+        if self.matlab_running is True:
+            self.engine.quit()
+            self.matlab_running = False
+            self.logger.info('Matlab closed.')
