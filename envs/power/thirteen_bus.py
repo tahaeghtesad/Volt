@@ -75,7 +75,7 @@ class ThirteenBus(gym.Env):
         if len(self.reward_history) > 32:
             del self.reward_history[0]
 
-        done = self.step_number == self.T or (reward > -0.1 and np.abs(np.mean(np.array(self.reward_history)) - reward) < 0.0001)
+        done = self.step_number == self.T
 
         # if done:
         #     print(f'Step: {self.step_number}')
