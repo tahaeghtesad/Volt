@@ -44,8 +44,8 @@ class ServerThread(Thread):
                     self.env.close()
                     self.finished = True
 
-        except ConnectionError:
-            self.logger.error(f'Client disconnected.')
+        except Exception as e:
+            self.logger.error(f'Client disconnected - {type(e)} - {e}')
             self.finished = True
             self.messenger.conn.close()
             self.env.close()
