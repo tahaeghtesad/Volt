@@ -67,7 +67,7 @@ class ThirteenBus(gym.Env):
         q = np.array(var['q'], dtype=np.float)
         fes = np.array([var['fes']], dtype=np.float)
 
-        obs = np.concatenate((v.flatten(), q.flatten(), fes))
+        obs = np.concatenate((v.flatten(), q.flatten()))
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
         reward = - fes[0]

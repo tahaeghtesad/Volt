@@ -34,6 +34,9 @@ config.update({
         'gamma': 200.0,
         'c': 1,
 
+        # Search range around the default parameters
+        'search_range': 0.2,
+
         # Length of history
         'history_size': 6,
 

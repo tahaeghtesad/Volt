@@ -8,8 +8,33 @@ class SingleNode(gym.Env):
     def __init__(self, config):
         self.env = ThirteenBus(config)
         self.index = config['index']
-        self.action_space = gym.spaces.Box(0, 10_000, (4,))
-        self.observation_space = gym.spaces.Box(-10_000, 10_000, (3,))
+        self.search_range = config['search_range']
+        # self.action_space = gym.spaces.Box(
+        #     low=np.array([
+        #         self.env.action_space.low[self.env.n * 0 + self.index],
+        #         self.env.action_space.low[self.env.n * 1 + self.index],
+        #         self.env.action_space.low[self.env.n * 2 + self.index],
+        #         self.env.action_space.low[self.env.n * 3 + self.index],
+        # ]),
+        #     high=np.array([
+        #         self.env.action_space.high[self.env.n * 0 + self.index],
+        #         self.env.action_space.high[self.env.n * 1 + self.index],
+        #         self.env.action_space.high[self.env.n * 2 + self.index],
+        #         self.env.action_space.high[self.env.n * 3 + self.index],
+        #     ]))
+
+        self.action_space = gym.spaces.Box(-self.search_range, self.search_range, (4,))
+
+        self.observation_space = gym.spaces.Box(
+            low=np.array([
+                self.env.observation_space.low[self.env.n * 0 + self.index],
+                self.env.observation_space.low[self.env.n * 1 + self.index],
+            ]),
+            high=np.array([
+                self.env.observation_space.high[self.env.n * 0 + self.index],
+                self.env.observation_space.high[self.env.n * 1 + self.index],
+            ])
+        )
 
         self.alpha = config['alpha']
         self.beta = config['beta']
@@ -31,20 +56,16 @@ class SingleNode(gym.Env):
             self.c * np.ones(self.env.n),
         ))
 
-        full_action[self.env.n * 0 + self.index] = action[0]
-        full_action[self.env.n * 1 + self.index] = action[1]
-        full_action[self.env.n * 2 + self.index] = action[2]
-        full_action[self.env.n * 3 + self.index] = action[3]
+        full_action[self.env.n * 0 + self.index] = self.alpha * action[0]
+        full_action[self.env.n * 1 + self.index] = self.beta * action[1]
+        full_action[self.env.n * 2 + self.index] = self.gamma * action[2]
+        full_action[self.env.n * 3 + self.index] = self.c * action[3]
 
         full_obs, reward, done, info = self.env.step(full_action)
 
         return np.array([full_obs[self.env.n * 0 + self.index],
-                         full_obs[self.env.n * 1 + self.index],
-                         full_obs[-1]]
+                         full_obs[self.env.n * 1 + self.index]]
                         ), reward, done, info
-
-    def __del__(self):
-        self.close()
 
     def close(self):
         self.env.close()
