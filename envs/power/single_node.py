@@ -5,16 +5,16 @@ from envs.power.thirteen_bus import ThirteenBus
 
 
 class SingleNode(gym.Env):
-    def __init__(self, index, config):
+    def __init__(self, config):
         self.env = ThirteenBus(config)
-        self.index = index
+        self.index = config['index']
         self.action_space = gym.spaces.Box(0, 10_000, (4,))
         self.observation_space = gym.spaces.Box(-10_000, 10_000, (3,))
 
-        self.alpha = 0.001
-        self.beta = 5
-        self.gamma = 200
-        self.c = 1
+        self.alpha = config['alpha']
+        self.beta = config['beta']
+        self.gamma = config['gamma']
+        self.c = config['c']
 
         self.n = 1
         self.T = self.env.T

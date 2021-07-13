@@ -11,9 +11,8 @@ class RemoteEnv(gym.Env):
     def __init__(self, host, port, config):
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         conn.connect((host, port))
-        conn.settimeout(60)
         self.messenger = Messenger(conn)
-        self.messenger.send_message(dict(event='start', env_params=dict(), config=config))
+        self.messenger.send_message(dict(event='start', config=config))
 
         env_info = self.messenger.get_message()
         self.action_space = env_info['action_space']

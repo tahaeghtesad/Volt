@@ -7,7 +7,7 @@ class Messenger:
     def __init__(self, conn) -> None:
         super().__init__()
         self.conn = conn
-        self.conn.settimeout(30)
+        # self.conn.settimeout(30)
 
     def read_bytes(self, size):
         buff = b''

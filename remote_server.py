@@ -1,30 +1,28 @@
 import logging
 import socket
-import struct
 import sys
-from _thread import start_new_thread
 from threading import Thread
-from typing import Optional, Callable, Any, Iterable, Mapping
-import json
-
-from _socket import gethostbyname
 
 from envs.power.single_node import SingleNode
-from envs.power.thirteen_bus import ThirteenBus
+from util.env_util import Historitized
 from util.network_util import Messenger
 
 
 class ServerThread(Thread):
-    def __init__(self, messenger: Messenger, info: dict, **kwargs) -> None:
+    def __init__(self, messenger: Messenger, **kwargs) -> None:
         super().__init__(**kwargs)
         self.logger = logging.getLogger(__name__)
         self.messenger = messenger
-        self.info = info
         self.finished = False
+        self.env = None
 
     def run(self) -> None:
-        self.env = SingleNode(0, self.info['env_params'])
-        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.T))
+        self.logger.info('Starting a remote environment...')
+        info = messenger.get_message()
+        assert info['event'] == 'start', 'Client Error.'
+
+        self.env = Historitized(SingleNode(info['config']), info['config']['history_size'])
+        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.env.T))
 
         try:
             while not self.finished:
@@ -66,10 +64,7 @@ if __name__ == '__main__':
         messenger = Messenger(conn)
 
         try:
-            info = messenger.get_message()
-            assert info['event'] == 'start'
-
-            thread = ServerThread(messenger, info)
+            thread = ServerThread(messenger)
             thread.start()
 
         except ConnectionError:

@@ -29,7 +29,7 @@ class ThirteenBus(gym.Env):
 
         self.null_stream = io.StringIO()
 
-        self.T = 500
+        self.T = self.env_config['T']
         # self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         # self.n = int(self.engine.workspace['n'])

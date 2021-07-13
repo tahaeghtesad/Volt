@@ -24,6 +24,22 @@ config = ddpg.DEFAULT_CONFIG.copy()
 config.update({
 
     'env': 'volt',
+    'env_config': {
+        # Index of trained node -> [0, env.n]
+        'index': 0,
+
+        # Default hyper parameters for nodes not trained.
+        'alpha': 0.001,
+        'beta': 5.0,
+        'gamma': 200.0,
+        'c': 1,
+
+        # Length of history
+        'history_size': 6,
+
+        # Episode length
+        'T': 500,
+    },
 
     # === Twin Delayed DDPG (TD3) and Soft Actor-Critic (SAC) tricks ===
     # TD3: https://spinningup.openai.com/en/latest/algorithms/td3.html
