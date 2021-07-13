@@ -26,5 +26,8 @@ class Historitized(gym.Env):
         self.history = [initial_obs] * self.history_size
         return np.array(self.history).flatten()
 
+    def close(self):
+        self.env.close()
+
     def render(self, mode='human'):
         return self.env.render(mode)
