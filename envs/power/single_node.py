@@ -56,10 +56,10 @@ class SingleNode(gym.Env):
             self.c * np.ones(self.env.n),
         ))
 
-        full_action[self.env.n * 0 + self.index] = self.alpha * action[0]
-        full_action[self.env.n * 1 + self.index] = self.beta * action[1]
-        full_action[self.env.n * 2 + self.index] = self.gamma * action[2]
-        full_action[self.env.n * 3 + self.index] = self.c * action[3]
+        full_action[self.env.n * 0 + self.index] = self.alpha * (1 + action[0])
+        full_action[self.env.n * 1 + self.index] = self.beta * (1 + action[1])
+        full_action[self.env.n * 2 + self.index] = self.gamma * (1 + action[2])
+        full_action[self.env.n * 3 + self.index] = self.c * (1 + action[3])
 
         full_obs, reward, done, info = self.env.step(full_action)
 
