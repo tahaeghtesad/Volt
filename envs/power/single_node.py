@@ -45,8 +45,9 @@ class SingleNode(gym.Env):
         self.T = self.env.T
 
     def reset(self):
-        self.env.reset()
-        return np.array([0., 0., 0.])
+        full_obs = self.env.reset()
+        return np.array([full_obs[self.env.n * 0 + self.index],
+                         full_obs[self.env.n * 1 + self.index]])
 
     def step(self, action: np.ndarray):
         full_action = np.concatenate((

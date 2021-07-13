@@ -53,7 +53,7 @@ class ThirteenBus(gym.Env):
 
         self.reward_history = []
 
-        return np.concatenate((np.zeros((self.n * 2, 1)).flatten(), np.zeros((1, ))))
+        return np.zeros((self.n * 2, 1)).flatten()
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         self.step_number += 1
