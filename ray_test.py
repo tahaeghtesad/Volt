@@ -60,20 +60,16 @@ config.update({
     # Postprocess the policy network model output with these hidden layers. If
     # use_state_preprocessor is False, then these will be the *only* hidden
     # layers in the network.
-    # "actor_hiddens": [400, 300],
-    "actor_hiddens": [32, 32],
+    "actor_hiddens": [400, 300],
     # Hidden layers activation of the postprocessing stage of the policy
     # network
-    # "actor_hidden_activation": tune.choice(['relu', 'tanh']),
-    "actor_hidden_activation": 'tanh',
+    "actor_hidden_activation": tune.choice(['relu', 'tanh']),
     # Postprocess the critic network model output with these hidden layers;
     # again, if use_state_preprocessor is True, then the state will be
     # preprocessed by the model specified with the "model" config option first.
-    # "critic_hiddens": [400, 300],
-    "critic_hiddens": [32, 32],
+    "critic_hiddens": [400, 300],
     # Hidden layers activation of the postprocessing state of the critic.
-    # "critic_hidden_activation": tune.choice(['relu', 'tanh']),
-    "critic_hidden_activation": 'tanh',
+    "critic_hidden_activation": tune.choice(['relu', 'tanh']),
     # N-step Q learning
     "n_step": 1,
 
@@ -84,11 +80,11 @@ config.update({
         "type": "OrnsteinUhlenbeckNoise",
         # For how many timesteps should we return completely random actions,
         # before we start adding (scaled) noise?
-        # "random_timesteps": tune.grid_search([0, 1, 10, 100, 1000]),
-        "random_timesteps": 50,
+        "random_timesteps": tune.grid_search([0, 1, 10, 100, 1000]),
+        # "random_timesteps": 50,
         # The OU-base scaling factor to always apply to action-added noise.
-        # "ou_base_scale": tune.grid_search([0.001, 0.1, 10., 100.0, 1000.0]),
-        "ou_base_scale": 0.2,
+        "ou_base_scale": tune.grid_search([0.001, 0.1, 10., 100.0, 1000.0]),
+        # "ou_base_scale": 0.2,
         # The OU theta param.
         "ou_theta": 0.15,
         # The OU sigma param.
@@ -96,11 +92,9 @@ config.update({
         # The initial noise scaling factor.
         "initial_scale": 1.0,
         # The final noise scaling factor.
-        # "final_scale": tune.grid_search([.0, 0.01, 0.1, 0.5, 1.0]),
-        "final_scale": 0.01,
+        "final_scale": tune.grid_search([.0, 0.01, 0.1, 0.5, 1.0]),
         # Timesteps over which to anneal scale (from initial to final values).
-        # "scale_timesteps": tune.grid_search([100, 1000, 10000]),
-        "scale_timesteps": 100,
+        "scale_timesteps": tune.grid_search([10, 50, 200, 500]),
     },
     # Number of env steps to optimize for before returning
     "timesteps_per_iteration": 1000,
@@ -111,8 +105,7 @@ config.update({
     # === Replay buffer ===
     # Size of the replay buffer. Note that if async_updates is set, then
     # each worker will have a replay buffer of this size.
-    # "buffer_size": tune.grid_search([5000, 50000]),
-    "buffer_size": 5000,
+    "buffer_size": tune.grid_search([5000, 50000]),
     # If True prioritized replay buffer will be used.
     "prioritized_replay": True,
     # Alpha parameter for prioritized replay buffer.
@@ -165,7 +158,7 @@ config.update({
     # Number of workers for collecting samples with. This only makes sense
     # to increase if your environment is particularly slow to sample, or if
     # you're using the Async or Ape-X optimizers.
-    "num_workers": 8,
+    "num_workers": 12,
     # Whether to compute priorities on workers.
     "worker_side_prioritization": False,
     # Prevent iterations from going lower than this time span
@@ -183,7 +176,7 @@ try:
         # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
         stop=MaximumIterationStopper(500),
         config=config,
-        checkpoint_freq=50,
+        checkpoint_freq=10,
         checkpoint_at_end=True
     )
 except KeyboardInterrupt:
