@@ -66,7 +66,7 @@ class SingleNode(gym.Env):
 
         return np.array([full_obs[self.env.n * 0 + self.index],
                          full_obs[self.env.n * 1 + self.index]]
-                        ), reward, done, info
+                        ), np.max(0, np.abs(info['v'][self.index] - 1) - 0.05) ** 2, done, info
 
     def close(self):
         self.env.close()
