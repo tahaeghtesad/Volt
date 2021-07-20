@@ -19,13 +19,14 @@ class ServerThread(Thread):
     def run(self) -> None:
         self.logger.info('Starting a remote environment...')
         info = messenger.get_message()
+        self.logger.info(f'Environment Config: {info["config"]}')
         assert info['event'] == 'start', 'Client Error.'
 
         self.env = Historitized(SingleNode(info['config']), info['config']['history_size'])
         self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.env.T))
 
-        try:
-            while not self.finished:
+        while not self.finished:
+            try:
                 message = self.messenger.get_message()
 
                 if message['event'] == 'step':
@@ -42,11 +43,11 @@ class ServerThread(Thread):
                     self.env.close()
                     self.finished = True
 
-        except Exception as e:
-            self.logger.error(f'Client disconnected - {type(e)} - {e}')
-            self.finished = True
-            self.messenger.conn.close()
-            self.env.close()
+            except Exception as e:
+                self.logger.error(f'Client disconnected - {type(e)} - {e}')
+                self.finished = True
+                self.messenger.conn.close()
+                self.env.close()
 
 
 if __name__ == '__main__':
