@@ -3,8 +3,7 @@ import socket
 import sys
 from threading import Thread
 
-from envs.power.single_node import SingleNode
-from envs.thirteen_bus_single_param import SingleParamThirteenBus
+from envs.power.thirteen_bus_single_param import SingleParamThirteenBus
 from util.env_util import Historitized
 from util.network_util import Messenger
 
