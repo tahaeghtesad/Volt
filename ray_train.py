@@ -35,10 +35,11 @@ config.update({
         'c': 1,
 
         # Search range around the default parameters
-        'search_range': 0.2,
+        # 'search_range': 0.2,
+        'search_range': 5,
 
         # Length of history
-        'history_size': 6,
+        'history_size': 4,
 
         # Episode length
         'T': 500,
@@ -79,14 +80,14 @@ config.update({
     # Postprocess the policy network model output with these hidden layers. If
     # use_state_preprocessor is False, then these will be the *only* hidden
     # layers in the network.
-    "actor_hiddens": [400, 300],
+    "actor_hiddens": [400, 300, 200, 100],
     # Hidden layers activation of the postprocessing stage of the policy
     # network
     "actor_hidden_activation": 'tanh',
     # Postprocess the critic network model output with these hidden layers;
     # again, if use_state_preprocessor is True, then the state will be
     # preprocessed by the model specified with the "model" config option first.
-    "critic_hiddens": [400, 300],
+    "critic_hiddens": [400, 300, 200, 100],
     # Hidden layers activation of the postprocessing state of the critic.
     "critic_hidden_activation": 'tanh',
     # N-step Q learning
