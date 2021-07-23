@@ -39,7 +39,7 @@ class ThirteenBus(gym.Env):
         self.episode = 0
 
         self.action_space = gym.spaces.Box(0, 10000, (4 * self.n,))
-        self.observation_space = gym.spaces.Box(-10000, 10000, (2 * self.n + 1,))
+        self.observation_space = gym.spaces.Box(-10000, 10000, (2 * self.n,))
 
         self.reward_history = []
 
@@ -53,7 +53,7 @@ class ThirteenBus(gym.Env):
 
         self.reward_history = []
 
-        return np.zeros((self.n * 2, 1)).flatten()
+        return np.zeros((self.n * 2)).flatten()
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         self.step_number += 1

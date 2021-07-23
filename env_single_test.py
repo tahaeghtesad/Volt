@@ -48,7 +48,7 @@ def eval(range):
     step = 0
     while not done:
         # action = np.array([0, 0, 0, 0])
-        action = env.action_space.sample()
+        action = env.action_space.low
         obs, reward, done, info = env.step(action)
 
         # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
@@ -63,7 +63,7 @@ def eval(range):
 
 
 if __name__ == '__main__':
-    ranges = [0, .1, .3, .5, .7, .9, 1, 2, 3, 4]
+    ranges = range(1, 10)
     with multiprocessing.Pool(12) as p:
         responses = p.map(eval, ranges)
     for i in range(len(ranges)):

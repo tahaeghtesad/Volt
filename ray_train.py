@@ -26,7 +26,7 @@ config.update({
     'env': 'volt',
     'env_config': {
         # Index of trained node -> [0, env.n]
-        'index': 0,
+        # 'index': 0,
 
         # Default hyper parameters for nodes not trained.
         'alpha': 0.001,
