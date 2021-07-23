@@ -4,6 +4,7 @@ import sys
 from threading import Thread
 
 from envs.power.single_node import SingleNode
+from envs.thirteen_bus_single_param import SingleParamThirteenBus
 from util.env_util import Historitized
 from util.network_util import Messenger
 
@@ -22,7 +23,7 @@ class ServerThread(Thread):
         self.logger.info(f'Environment Config: {info["config"]}')
         assert info['event'] == 'start', 'Client Error.'
 
-        self.env = Historitized(SingleNode(info['config']), info['config']['history_size'])
+        self.env = Historitized(SingleParamThirteenBus(info['config']), info['config']['history_size'])
         self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.env.T))
 
         while not self.finished:

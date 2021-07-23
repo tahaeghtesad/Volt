@@ -21,7 +21,7 @@ def eval(range):
     start = datetime.now()
 
     config = {
-        'index': 29,
+        'index': 3,
 
         # Default hyper parameters for nodes not trained.
         'alpha': 0.001,
@@ -36,7 +36,7 @@ def eval(range):
         'history_size': 1,
 
         # Episode length
-        'T': 500,
+        'T': 2000,
     }
     env = RemoteEnv('localhost', 6985, config)
 
@@ -48,7 +48,7 @@ def eval(range):
     step = 0
     while not done:
         # action = np.array([0, 0, 0, 0])
-        action = env.action_space.sample()
+        action = env.action_space.low
         obs, reward, done, info = env.step(action)
 
         # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
