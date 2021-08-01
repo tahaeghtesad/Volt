@@ -47,10 +47,10 @@ config = {
             'c': 1,
         },
 
-        'alpha': tune.grid_search(np.linspace(0.0005, 0.002, 15).tolist()),
-        'beta': tune.grid_search(np.linspace(1, 10, 15).tolist()),
-        'gamma': tune.grid_search(np.linspace(150, 250, 15).tolist()),
-        'c': tune.grid_search(np.linspace(0.5, 10, 15).tolist()),
+        'alpha': tune.grid_search(np.log10(np.linspace(0.0005, 0.002, 15)).tolist()),
+        'beta': tune.grid_search(np.log10(np.linspace(1, 10, 15)).tolist()),
+        'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
+        'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
 
         # Search range around the default parameters
         'search_range': 5,
