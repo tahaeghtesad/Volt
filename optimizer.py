@@ -5,9 +5,36 @@ from datetime import datetime
 import ray
 from ray import tune
 import numpy as np
+from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
 
 from envs.remote.client import RemoteEnv
+
+config = {
+    # 'index': 3,
+
+    # Default hyper parameters for nodes not trained.
+    'defaults': {
+        'alpha': 0.001,
+        'beta': 5.0,
+        'gamma': 200.0,
+        'c': 1,
+    },
+
+    # 'alpha': tune.grid_search(np.log10(np.linspace(0.0005, 0.002, 15)).tolist()),
+    # 'beta': tune.grid_search(np.log10(np.linspace(1, 10, 15)).tolist()),
+    # 'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
+    # 'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
+
+    # Search range around the default parameters
+    'search_range': 5,
+
+    # Length of history
+    'history_size': 1,
+
+    # Episode length
+    'T': 500,
+}
 
 
 def eval(config):
@@ -33,49 +60,41 @@ def eval(config):
         rewards.append(reward)
         step += 1
 
-    print(f'Took {datetime.now()-start:} (s).')
+    print(f'Took {datetime.now() - start:} (s).')
     env.close()
-    return tune.report(episode_reward=sum(rewards))
+    return tune.report(iterations=1, episode_reward=sum(rewards))
 
-config = {
-        # 'index': 3,
 
-        # Default hyper parameters for nodes not trained.
-        'defaults': {
-            'alpha': 0.001,
-            'beta': 5.0,
-            'gamma': 200.0,
-            'c': 1,
-        },
+# These happened to be the best hyper-parameters. Reward: -0.785176
+points_to_evaluate = [
+    {'alpha': -2.6989700043360187, 'beta': 0.0, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
+    {'alpha': -2.6989700043360187, 'beta': 0.3590219426416679, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
+    {'alpha': -2.6989700043360187, 'beta': 0.5528419686577808, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812}
+]
 
-        # 'alpha': tune.grid_search(np.log10(np.linspace(0.0005, 0.002, 15)).tolist()),
-        # 'beta': tune.grid_search(np.log10(np.linspace(1, 10, 15)).tolist()),
-        # 'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
-        # 'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
-
-        # Search range around the default parameters
-        'search_range': 5,
-
-        # Length of history
-        'history_size': 1,
-
-        # Episode length
-        'T': 500,
-    }
+search_space = {
+    'alpha': (math.log10(0.00005), math.log10(0.02)),
+    'beta': (math.log10(0.00001), math.log10(1.5)),
+    'gamma': (math.log10(100), math.log10(300)),
+    'c': (math.log10(0.001), math.log10(1)),
+}
 
 if __name__ == '__main__':
-    ray.init(num_cpus=8)
+    ray.init(num_cpus=12)
     analysis = tune.run(
         eval,
         config=config,
         name='hyperparameter_check_bo',
-        search_alg=BayesOptSearch(space={
-            'alpha': (math.log10(0.00005), math.log10(0.02)),
-            'beta': (math.log10(0.00001), math.log10(1.5)),
-            'gamma': (math.log10(100), math.log10(300)),
-            'c': (math.log10(0.001), math.log10(1)),
-            }, metric="episode_reward", mode="max")
-        )
+        search_alg=BayesOptSearch(space=search_space, points_to_evaluate=points_to_evaluate,
+                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=2,
+                                  utility_kwargs={
+                                      "kind": "ucb",
+                                      "kappa": 2.5,
+                                      "xi": 0.0
+                                  }),
+        scheduler=AsyncHyperBandScheduler(metric='episode_reward', mode='max'),
+        num_samples=1440,
+    )
 
     print("Best config: ", analysis.get_best_config(
         metric="episode_reward", mode="max"))
