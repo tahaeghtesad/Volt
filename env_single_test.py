@@ -17,20 +17,22 @@ from envs.remote.client import RemoteEnv
 # Data.c=1*ones(n,1);
 
 
-def eval(range):
+def eval(i):
     start = datetime.now()
 
     config = {
         'index': 3,
 
         # Default hyper parameters for nodes not trained.
-        'alpha': 0.001,
-        'beta': 5.0,
-        'gamma': 200.0,
-        'c': 1,
+        'defaults': {
+            'alpha': 0.001,
+            'beta': 5.0,
+            'gamma': 200.0,
+            'c': 1,
+        },
 
         # Search range around the default parameters
-        'search_range': range,
+        'search_range': 5,
 
         # Length of history
         'history_size': 1,
@@ -48,7 +50,11 @@ def eval(range):
     step = 0
     while not done:
         # action = np.array([0, 0, 0, 0])
-        action = env.action_space.low
+        # action = env.action_space.low
+        action = np.log10(np.array([config['defaults']['alpha'],
+                           config['defaults']['beta'],
+                           config['defaults']['gamma'],
+                           config['defaults']['c']]))
         obs, reward, done, info = env.step(action)
 
         # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
@@ -57,13 +63,13 @@ def eval(range):
         rewards.append(reward)
         step += 1
 
-    print(f'Took {datetime.now()-start:} (s).')
+    print(f'Took {datetime.now() - start:} (s).')
     env.close()
     return rewards
 
 
 if __name__ == '__main__':
-    ranges = range(1, 10)
+    ranges = range(1, 2)
     with multiprocessing.Pool(12) as p:
         responses = p.map(eval, ranges)
     for i in range(len(ranges)):
