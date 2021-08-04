@@ -75,7 +75,12 @@ if __name__ == '__main__':
         eval,
         config=config,
         name='hyperparameter_check_bo',
-        search_alg=BayesOptSearch(metric="episode_reward", mode="max")
+        search_alg=BayesOptSearch(space={
+            'alpha': (math.log10(0.00005), math.log10(0.02)),
+            'beta': (math.log10(0.00001), math.log10(1.5)),
+            'gamma': (math.log10(100), math.log10(300)),
+            'c': (math.log10(0.001), math.log10(1)),
+            }, metric="episode_reward", mode="max")
         )
 
     print("Best config: ", analysis.get_best_config(
