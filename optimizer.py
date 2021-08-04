@@ -55,7 +55,7 @@ config = {
         # 'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
 
         'alpha': tune.uniform(math.log10(0.00005), math.log10(0.02)),
-        'beta': tune.uniform(math.log10(0), math.log10(1.5)),
+        'beta': tune.uniform(math.log10(0.00001), math.log10(1.5)),
         'gamma': tune.uniform(math.log10(100), math.log10(300)),
         'c': tune.uniform(math.log10(0.001), math.log10(1)),
 
