@@ -37,6 +37,7 @@ def eval(config):
 
     print(f'Took {datetime.now()-start:} (s).')
     env.close()
+    return sum(rewards)
 
 config = {
         # 'index': 3,
@@ -53,11 +54,6 @@ config = {
         # 'beta': tune.grid_search(np.log10(np.linspace(1, 10, 15)).tolist()),
         # 'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
         # 'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
-
-        'alpha': tune.uniform(math.log10(0.00005), math.log10(0.02)),
-        'beta': tune.uniform(math.log10(0.00001), math.log10(1.5)),
-        'gamma': tune.uniform(math.log10(100), math.log10(300)),
-        'c': tune.uniform(math.log10(0.001), math.log10(1)),
 
         # Search range around the default parameters
         'search_range': 5,
