@@ -38,7 +38,7 @@ class ThirteenBus(gym.Env):
         self.step_number = 0
         self.episode = 0
 
-        self.action_space = gym.spaces.Box(0, 10000, (4 * self.n,))
+        self.action_space = gym.spaces.Box(-self.env_config['search_range'], self.env_config['search_range'], (4 * self.n,))
         self.observation_space = gym.spaces.Box(-10000, 10000, (2 * self.n,))
 
         self.reward_history = []
@@ -51,11 +51,17 @@ class ThirteenBus(gym.Env):
         self.engine.workspace['T'] = self.T
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
+        # obs, reward, done, info = self.step(np.repeat(np.array([self.env_config['defaults']['alpha'],
+        #                                               self.env_config['defaults']['beta'],
+        #                                               self.env_config['defaults']['gamma'],
+        #                                               self.env_config['defaults']['c']]), self.n))
+
         self.reward_history = []
 
-        return np.zeros((self.n * 2)).flatten()
+        return np.zeros(2 * self.n)
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
+        # action = np.power(10, action)
         self.step_number += 1
         var = self.engine.step(matlab.double(action[0 * self.n: 1 * self.n].reshape(self.n, 1).tolist()),
                                matlab.double(action[1 * self.n: 2 * self.n].reshape(self.n, 1).tolist()),

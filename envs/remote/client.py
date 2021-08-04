@@ -1,9 +1,12 @@
+import multiprocessing
+
 import gym
 import socket
 
 import numpy as np
 
 from util.network_util import Messenger
+from tqdm import tqdm
 
 
 class RemoteEnv(gym.Env):
@@ -40,7 +43,18 @@ class RemoteEnv(gym.Env):
         raise NotImplementedError()
 
 
-if __name__ == '__main__':
+
+def job(i):
     env = RemoteEnv('localhost', 6985, None)
+    print(f'Starting {i}')
     env.reset()
-    env.step(env.action_space.sample())
+    for step in range(500):
+        env.step(env.action_space.sample())
+    del env
+    print(f'Done {i}')
+    return True
+
+if __name__ == '__main__':
+
+    with multiprocessing.Pool(10) as p:
+        p.map(job, range(1000))
