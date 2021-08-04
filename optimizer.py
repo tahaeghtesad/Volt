@@ -4,6 +4,7 @@ from datetime import datetime
 import ray
 from ray import tune
 import numpy as np
+from ray.tune.suggest.bayesopt import BayesOptSearch
 
 from envs.remote.client import RemoteEnv
 
@@ -47,10 +48,15 @@ config = {
             'c': 1,
         },
 
-        'alpha': tune.grid_search(np.log10(np.linspace(0.0005, 0.002, 15)).tolist()),
-        'beta': tune.grid_search(np.log10(np.linspace(1, 10, 15)).tolist()),
-        'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
-        'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
+        # 'alpha': tune.grid_search(np.log10(np.linspace(0.0005, 0.002, 15)).tolist()),
+        # 'beta': tune.grid_search(np.log10(np.linspace(1, 10, 15)).tolist()),
+        # 'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
+        # 'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
+
+        'alpha': tune.uniform(np.log10(0.00005), np.log10(0.02)),
+        'beta': tune.uniform(np.log10(0), np.log10(1.5)),
+        'gamma': tune.uniform(np.log10(100), np.log10(300)),
+        'c': tune.uniform(np.log10(0.001), np.log10(1)),
 
         # Search range around the default parameters
         'search_range': 5,
@@ -66,7 +72,10 @@ if __name__ == '__main__':
     ray.init(num_cpus=8)
     analysis = tune.run(
         eval,
-        config=config,)
+        config=config,
+        name='hyperparameter_check_bo',
+        search_alg=BayesOptSearch(metric="episode_reward", mode="max")
+        )
 
     print("Best config: ", analysis.get_best_config(
         metric="episode_reward", mode="max"))
