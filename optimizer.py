@@ -33,11 +33,9 @@ def eval(config):
         rewards.append(reward)
         step += 1
 
-    tune.report(episode_reward=sum(rewards))
-
     print(f'Took {datetime.now()-start:} (s).')
     env.close()
-    return sum(rewards)
+    return tune.report(episode_reward=sum(rewards))
 
 config = {
         # 'index': 3,
