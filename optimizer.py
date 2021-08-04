@@ -1,3 +1,4 @@
+import math
 import time
 from datetime import datetime
 
@@ -53,10 +54,10 @@ config = {
         # 'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
         # 'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
 
-        'alpha': tune.uniform(np.log10(0.00005), np.log10(0.02)),
-        'beta': tune.uniform(np.log10(0), np.log10(1.5)),
-        'gamma': tune.uniform(np.log10(100), np.log10(300)),
-        'c': tune.uniform(np.log10(0.001), np.log10(1)),
+        'alpha': tune.uniform(math.log10(0.00005), math.log10(0.02)),
+        'beta': tune.uniform(math.log10(0), math.log10(1.5)),
+        'gamma': tune.uniform(math.log10(100), math.log10(300)),
+        'c': tune.uniform(math.log10(0.001), math.log10(1)),
 
         # Search range around the default parameters
         'search_range': 5,
