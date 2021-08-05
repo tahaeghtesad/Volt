@@ -28,6 +28,6 @@ def read_experiment_state(path, count):
 
 if __name__ == '__main__':
     # path = 'C:/users/taha/desktop/experiment_state-2021-08-04_12-37-37.json' # grid search
-    path = 'C:/users/taha/desktop/experiment_state-2021-08-04_17-19-44.json'
+    path = 'C:/users/taha/desktop/experiment_state-2021-08-04_22-01-59.json'
 
     read_experiment_state(path, 20)
