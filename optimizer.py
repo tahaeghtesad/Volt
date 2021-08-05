@@ -78,10 +78,10 @@ points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperpara
 
 
 search_space = {
-    'alpha': (config['search_range'], config['search_range']),
-    'beta': (config['search_range'], config['search_range']),
-    'gamma': (config['search_range'], config['search_range']),
-    'c': (config['search_range'], config['search_range']),
+    'alpha': (-config['search_range'], config['search_range']),
+    'beta': (-config['search_range'], config['search_range']),
+    'gamma': (-config['search_range'], config['search_range']),
+    'c': (-config['search_range'], config['search_range']),
 }
 
 if __name__ == '__main__':
