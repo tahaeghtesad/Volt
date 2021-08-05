@@ -39,7 +39,6 @@ config = {
 
 
 def eval(config):
-    time.sleep(np.random.rand() * 10)
     start = datetime.now()
 
     env = RemoteEnv('localhost', 6985, config)
@@ -74,7 +73,7 @@ def eval(config):
 # ]
 
 # from the best of experiment state
-points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_17-19-44.json', 16)
+points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_17-19-44.json', 12)
 
 
 search_space = {
@@ -91,12 +90,7 @@ if __name__ == '__main__':
         config=config,
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space, points_to_evaluate=points_to_evaluate,
-                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=64,
-                                  utility_kwargs={
-                                      "kind": "ucb",
-                                      "kappa": 2.5,
-                                      "xi": 0.0
-                                  }),
+                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
         scheduler=AsyncHyperBandScheduler(metric='episode_reward', mode='max'),
         num_samples=1440,
     )
