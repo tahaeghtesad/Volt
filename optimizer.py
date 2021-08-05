@@ -74,7 +74,7 @@ def eval(config):
 # ]
 
 # from the best of experiment state
-points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyper_parameter_check_bo/experiment_state-2021-08-04_17-19-44.json', 16)
+points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_17-19-44.json', 16)
 
 
 search_space = {

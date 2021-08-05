@@ -14,16 +14,16 @@ def read_experiment_state(path, count):
 
         experiment_state['checkpoints'] = checkpoints
 
-        max_reward = -500
-        best_config = dict()
+        best_configs = []
         in_order = sorted(experiment_state['checkpoints'], key=lambda c: 100 if 'episode_reward' not in c['metric_analysis'] else -c['metric_analysis']['episode_reward']['max'])
         for i in range(count):
             config = dict(alpha=in_order[i]['config']['alpha'],
                           beta=in_order[i]['config']['beta'],
                           gamma=in_order[i]['config']['gamma'],
                           c=in_order[i]['config']['c'])
+            best_configs.append(config)
             print(f'reward: {in_order[i]["metric_analysis"]["episode_reward"]["max"]} - config: {config}')
-        return config
+        return best_configs
 
 
 if __name__ == '__main__':
