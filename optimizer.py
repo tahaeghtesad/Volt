@@ -9,6 +9,7 @@ from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
 
 from envs.remote.client import RemoteEnv
+from read_experiment_state import read_experiment_state
 
 config = {
     # 'index': 3,
@@ -66,17 +67,21 @@ def eval(config):
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
-points_to_evaluate = [
-    {'alpha': -2.6989700043360187, 'beta': 0.0, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
-    {'alpha': -2.6989700043360187, 'beta': 0.3590219426416679, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
-    {'alpha': -2.6989700043360187, 'beta': 0.5528419686577808, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812}
-]
+# points_to_evaluate = [
+#     {'alpha': -2.6989700043360187, 'beta': 0.0, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
+#     {'alpha': -2.6989700043360187, 'beta': 0.3590219426416679, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
+#     {'alpha': -2.6989700043360187, 'beta': 0.5528419686577808, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812}
+# ]
+
+# from the best of experiment state
+points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyper_parameter_check_bo/experiment_state-2021-08-04_17-19-44.json', 16)
+
 
 search_space = {
-    'alpha': (math.log10(0.00005), math.log10(0.02)),
-    'beta': (math.log10(0.00001), math.log10(1.5)),
-    'gamma': (math.log10(100), math.log10(300)),
-    'c': (math.log10(0.001), math.log10(1)),
+    'alpha': (config['search_range'], config['search_range']),
+    'beta': (config['search_range'], config['search_range']),
+    'gamma': (config['search_range'], config['search_range']),
+    'c': (config['search_range'], config['search_range']),
 }
 
 if __name__ == '__main__':
@@ -84,9 +89,9 @@ if __name__ == '__main__':
     analysis = tune.run(
         eval,
         config=config,
-        name='hyperparameter_check_bo',
+        name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space, points_to_evaluate=points_to_evaluate,
-                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=2,
+                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=64,
                                   utility_kwargs={
                                       "kind": "ucb",
                                       "kappa": 2.5,
