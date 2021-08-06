@@ -34,35 +34,41 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 500,
+    'T': 10,
+
+    # Repeat
+    'repeat': 50
 }
 
 
 def eval(config):
-    start = datetime.now()
-
     env = RemoteEnv('localhost', 6985, config)
-    print(f'Env created. Action Space: {env.action_space}, Observation Space: {env.observation_space}')
 
-    obs = env.reset()
-    done = False
-    rewards = []
-    step = 0
-    while not done:
-        # action = np.array([0, 0, 0, 0])
-        # action = env.action_space.low
-        obs, reward, done, info = env.step(np.array([config['alpha'], config['beta'], config['gamma'], config['c']]))
+    episode_rewards = list()
 
-        # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
+    for i in range(config['repeat']):
+        obs = env.reset()
+        done = False
+        rewards = []
+        step = 0
+        while not done:
+            # action = np.array([0, 0, 0, 0])
+            # action = env.action_space.low
+            obs, reward, done, info = env.step(np.array([config['alpha'], config['beta'], config['gamma'], config['c']]))
 
-        # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
-        # tune.report(reward=reward)
-        rewards.append(reward)
-        step += 1
+            # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
 
-    print(f'Took {datetime.now() - start:} (s).')
+            # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
+            # tune.report(reward=reward)
+            rewards.append(reward)
+            step += 1
+
+        episode_reward = sum(rewards)
+        tune.report(episode_reward=episode_reward)
+        episode_rewards.append(episode_reward)
+
     env.close()
-    return tune.report(iterations=1, episode_reward=sum(rewards))
+    return tune.report(avg_reward=sum(episode_rewards)/len(episode_rewards))
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
@@ -73,7 +79,7 @@ def eval(config):
 # ]
 
 # from the best of experiment state
-points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_17-19-44.json', 12)
+points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_22-01-59.json', 24)
 
 
 search_space = {
@@ -90,12 +96,12 @@ if __name__ == '__main__':
         config=config,
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space, points_to_evaluate=points_to_evaluate,
-                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
-        scheduler=AsyncHyperBandScheduler(metric='episode_reward', mode='max'),
+                                  metric="avg_reward", mode="max", verbose=1, random_search_steps=12),
+        scheduler=AsyncHyperBandScheduler(metric='avg_reward', mode='max'),
         num_samples=1440,
     )
 
     print("Best config: ", analysis.get_best_config(
-        metric="episode_reward", mode="max"))
+        metric="avg_reward", mode="max"))
 
     print(analysis.results_df)
