@@ -5,8 +5,8 @@ from envs.power.thirteen_bus import ThirteenBus
 
 
 class SingleParamThirteenBus(gym.Env):
-    def __init__(self, config):
-        self.env = ThirteenBus(config)
+    def __init__(self, engine_pool, config):
+        self.env = ThirteenBus(engine_pool, config)
 
         self.action_space = gym.spaces.Box(-config['search_range'], config['search_range'], (4,))
 

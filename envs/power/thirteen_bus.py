@@ -9,23 +9,18 @@ import numpy as np
 
 import logging
 
+from util.reusable_pool import ReusablePool
+
 
 class ThirteenBus(gym.Env):
-    def __init__(self, env_config):
+    def __init__(self, engine_pool: ReusablePool, env_config):
         self.logger = logging.getLogger(__name__)
         self.matlab_running = False
+        self.engine_pool = engine_pool
 
-        # if engine is None:
         self.env_config = env_config
-        start = time.time()
-        self.logger.info('Starting matlab engine...')
-        self.engine = matlab.engine.start_matlab()
-        self.engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\matlab')
-        self.matlab_running = True
 
-        self.logger.info(f'Matlab engine started in {time.time() - start:.2f} seconds.')
-        # else:
-        #     self.engine = engine
+        self.engine = self.engine_pool.acquire()
 
         self.null_stream = io.StringIO()
 
@@ -47,7 +42,6 @@ class ThirteenBus(gym.Env):
         self.episode += 1
         self.step_number = 0
 
-        self.engine.eval('clc', nargout=0)
         self.engine.workspace['T'] = self.T
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
@@ -95,6 +89,6 @@ class ThirteenBus(gym.Env):
 
     def close(self):
         if self.matlab_running is True:
-            self.engine.quit()
             self.matlab_running = False
+            self.engine_pool.release(self.engine)
             self.logger.info('Matlab closed.')
