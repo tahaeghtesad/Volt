@@ -34,7 +34,7 @@ class ThirteenBus(gym.Env):
         self.episode = 0
 
         self.action_space = gym.spaces.Box(-self.env_config['search_range'], self.env_config['search_range'], (4 * self.n,))
-        self.observation_space = gym.spaces.Box(-10000, 10000, (2 * self.n,))
+        self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
 
         self.reward_history = []
 
@@ -42,7 +42,11 @@ class ThirteenBus(gym.Env):
         self.episode += 1
         self.step_number = 0
 
+        init_vol = (1 - 0.9025) * np.random.rand(self.n, 1) + 0.9025
+
         self.engine.workspace['T'] = self.T
+        self.engine.workspace['init_vol'] = matlab.double(init_vol.tolist())
+
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         # obs, reward, done, info = self.step(np.repeat(np.array([self.env_config['defaults']['alpha'],
@@ -52,7 +56,7 @@ class ThirteenBus(gym.Env):
 
         self.reward_history = []
 
-        return np.zeros(2 * self.n)
+        return init_vol.flatten()
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         # action = np.power(10, action)
@@ -67,7 +71,7 @@ class ThirteenBus(gym.Env):
         q = np.array(var['q'], dtype=np.float)
         fes = np.array([var['fes']], dtype=np.float)
 
-        obs = np.concatenate((v.flatten(), q.flatten()))
+        obs = v.flatten()
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
         reward = - fes[0]
