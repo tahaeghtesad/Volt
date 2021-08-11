@@ -34,7 +34,7 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 10,
+    'T': 6000,
 
     # Repeat
     'repeat': 1
