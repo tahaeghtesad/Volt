@@ -46,6 +46,10 @@ config.update({
 
     "lr": 5e-5,
 
+    # Clip param for the value function. Note that this is sensitive to the
+    # scale of the rewards. If your expected V is large, increase this.
+    "vf_clip_param": 400.0,
+
     "num_workers": 12,
     # Whether to compute priorities on workers.
 
@@ -60,7 +64,7 @@ if __name__ == '__main__':
         result = tune.run(
             ppo.PPOTrainer,
             # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
-            stop=MaximumIterationStopper(1500),
+            stop=MaximumIterationStopper(500),
             config=config,
             checkpoint_freq=10,
             checkpoint_at_end=True
