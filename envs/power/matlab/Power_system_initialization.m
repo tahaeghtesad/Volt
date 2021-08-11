@@ -164,7 +164,7 @@ var.v = zeros(n,T); % voltage
 var.q = zeros(n,T); % ''actual'' reactive power
 var.f = zeros(1,T); % objective function value
 var.fes = zeros(1,T); % feasibility of solution
-var.v(:,0) = init_vol;
+var.v(:,1) = init_vol;
 
 global g_data
 global g_T

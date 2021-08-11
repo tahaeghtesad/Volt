@@ -70,11 +70,12 @@ class ThirteenBus(gym.Env):
         v = np.array(var['v'], dtype=np.float)
         q = np.array(var['q'], dtype=np.float)
         fes = np.array([var['fes']], dtype=np.float)
+        f = np.array([var['f']], dtype=np.float)
 
         obs = v.flatten()
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
-        reward = - fes[0]
+        reward = - f[0]
         self.reward_history.append(reward)
         if len(self.reward_history) > 32:
             del self.reward_history[0]
@@ -86,7 +87,7 @@ class ThirteenBus(gym.Env):
 
         # print(f'Step: {self.step_number} - q_norm: {q_norm} - fes: {fes} - reward: {reward}')
 
-        return obs, reward, done, {'v': v, 'q': q, 'fes': fes[0]}
+        return obs, reward, done, {'v': v, 'q': q, 'fes': fes[0], 'f': f[0]}
 
     def render(self, mode='human'):
         raise NotImplementedError()

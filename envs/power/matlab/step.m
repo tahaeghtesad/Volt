@@ -11,8 +11,10 @@ function state = step(alpha, beta, gamma, c, t)
     state.v = data.v(:, t);
     state.q = data.q(:, t);
     state.fes = data.fes(t);
+    state.f = data.f(t);
+    %state = data;
 
-    g_var = data
+    g_var = data;
 
 %    disp(alpha)
 %    disp(beta)

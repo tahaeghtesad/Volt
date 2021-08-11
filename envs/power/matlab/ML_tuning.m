@@ -1,13 +1,7 @@
 
+clc; close all;
+T = 500;
 Power_system_initialization
-var.q_hat = zeros(n,T); % ''virtual'' reactive power
-var.xi = zeros(n,T); % lagrangian multiplier for reactive power constraint
-var.lambda_bar = zeros(n,T); % lagrangian multipler for voltage constraint (upper limit)
-var.lambda_un = zeros(n,T); % lagrangian multipler for voltage constraint (lower limit)
-var.v = zeros(n,T); % voltage
-var.q = zeros(n,T); % ''actual'' reactive power
-var.f = zeros(1,T); % objective function value
-var.fes = zeros(1,T); % feasibility of solution
 % Algorithm parameters
 for t=1:T
 alpha = 0.001*ones(n,1);
