@@ -37,19 +37,18 @@ config = {
     'T': 10,
 
     # Repeat
-    'repeat': 50
+    'repeat': 1
 }
 
 
 def eval(config):
     env = RemoteEnv('localhost', 6985, config)
 
-    episode_rewards = list()
+    rewards = []
 
     for i in range(config['repeat']):
         obs = env.reset()
         done = False
-        rewards = []
         step = 0
         while not done:
             # action = np.array([0, 0, 0, 0])
@@ -63,12 +62,9 @@ def eval(config):
             rewards.append(reward)
             step += 1
 
-        episode_reward = sum(rewards)
-        tune.report(episode_reward=episode_reward)
-        episode_rewards.append(episode_reward)
-
     env.close()
-    return tune.report(avg_reward=sum(episode_rewards)/len(episode_rewards))
+    avg_reward = sum(rewards) / len(rewards)
+    return tune.report(avg_reward=avg_reward)
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
@@ -79,7 +75,7 @@ def eval(config):
 # ]
 
 # from the best of experiment state
-points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_22-01-59.json', 24)
+# points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_22-01-59.json', 24)
 
 
 search_space = {
@@ -95,7 +91,8 @@ if __name__ == '__main__':
         eval,
         config=config,
         name='hyperparameter_check_bo_full_range',
-        search_alg=BayesOptSearch(space=search_space, points_to_evaluate=points_to_evaluate,
+        search_alg=BayesOptSearch(space=search_space,
+                                  # points_to_evaluate=points_to_evaluate,
                                   metric="avg_reward", mode="max", verbose=1, random_search_steps=12),
         scheduler=AsyncHyperBandScheduler(metric='avg_reward', mode='max'),
         num_samples=1440,
