@@ -1,5 +1,6 @@
 import datetime
 import io
+import math
 import sys
 
 import gym
@@ -75,7 +76,13 @@ class ThirteenBus(gym.Env):
         obs = v.flatten()
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
-        reward = - f[0]
+
+        loss = 0
+        for i in range(self.n):
+            loss += math.pow(max(0, math.fabs(v[i] - 1) - self.env_config['voltage_threshold']), 2)\
+                    + self.env_config['power_injection_cost'] * q[i] * q[i]
+
+        reward = -loss
         self.reward_history.append(reward)
         if len(self.reward_history) > 32:
             del self.reward_history[0]
