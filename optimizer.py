@@ -46,11 +46,10 @@ def eval(config):
 
     rewards = []
 
-    for i in tqdm(range(config['repeat'])):
+    for i in range(config['repeat']):
         obs = env.reset()
         done = False
-        step = 0
-        while not done:
+        for step in tqdm(range(config['T'])):
             # action = np.array([0, 0, 0, 0])
             # action = env.action_space.low
             obs, reward, done, info = env.step(
@@ -61,7 +60,6 @@ def eval(config):
             # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
             # tune.report(reward=reward)
             rewards.append(reward)
-            step += 1
 
     env.close()
     episode_reward = sum(rewards)
