@@ -13,6 +13,8 @@ from read_experiment_state import read_experiment_state
 
 config = {
     # 'index': 3,
+    'voltage_threshold': 0.05,
+    'power_injection_cost': 0.25,
 
     # Default hyper parameters for nodes not trained.
     'defaults': {
@@ -34,7 +36,7 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 6000,
+    'T': 3000,
 
     # Repeat
     'repeat': 1
