@@ -5,7 +5,6 @@ import ray
 from ray import tune
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
-from tqdm import tqdm
 
 from envs.remote.client import RemoteEnv
 
@@ -49,7 +48,7 @@ def eval(config):
     for i in range(config['repeat']):
         obs = env.reset()
         done = False
-        for step in tqdm(range(config['T'])):
+        for step in range(config['T']):
             # action = np.array([0, 0, 0, 0])
             # action = env.action_space.low
             obs, reward, done, info = env.step(
