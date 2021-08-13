@@ -9,19 +9,22 @@ class ReusablePool:
     """
 
     def __init__(self, size, constructor, clean_up):
-        start = time.time()
+        # start = time.time()
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Initiating instances...')
-        with ThreadPool(size) as tp:
-            self._reusables = tp.map(constructor, range(size))
-            self._clean_up = clean_up
-        self.logger.info(f'Instances initiated. Took {time.time() - start} (s).')
+        # self.logger.info('Initiating instances...')
+        # with ThreadPool(size) as tp:
+        #     self._reusables = tp.map(constructor, range(size))
+        #     self._clean_up = clean_up
+        # self.logger.info(f'Instances initiated. Took {time.time() - start} (s).')
+        self.constructor = constructor
+        self.clean_up = clean_up
 
     def acquire(self):
         self.logger.info('Acquiring an instance.')
-        return self._reusables.pop()
+        return self.constructor()
 
     def release(self, reusable):
         self.logger.info('Releasing an instance.')
-        self._clean_up(reusable)
-        self._reusables.append(reusable)
+        # self._clean_up(reusable)
+        # self._reusables.append(reusable)
+        reusable.close()
