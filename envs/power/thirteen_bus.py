@@ -82,7 +82,7 @@ class ThirteenBus(gym.Env):
             loss += math.pow(max(0, math.fabs(v[i] - 1) - self.env_config['voltage_threshold']), 2)\
                     + self.env_config['power_injection_cost'] * q[i] * q[i]
 
-        reward = -loss
+        reward = - loss[0]
         self.reward_history.append(reward)
         if len(self.reward_history) > 32:
             del self.reward_history[0]
