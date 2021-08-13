@@ -3,7 +3,7 @@ import math
 import numpy as np
 import ray
 from ray import tune
-from ray.tune.schedulers import AsyncHyperBandScheduler
+from ray.tune.schedulers import FIFOScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
 
 from envs.remote.client import RemoteEnv
@@ -94,7 +94,8 @@ if __name__ == '__main__':
                                   points_to_evaluate=points_to_evaluate,
                                   metric="episode_reward", mode="min", verbose=1, random_search_steps=12),
         # scheduler=AsyncHyperBandScheduler(metric='episode_reward', mode='min'),
-        num_samples=1440,
+        scheduler=FIFOScheduler(),
+        num_samples=-1,
     )
 
     print("Best config: ", analysis.get_best_config(
