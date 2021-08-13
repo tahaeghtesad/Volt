@@ -1,15 +1,13 @@
 import math
-import time
-from datetime import datetime
 
+import numpy as np
 import ray
 from ray import tune
-import numpy as np
 from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
+from tqdm import tqdm
 
 from envs.remote.client import RemoteEnv
-from read_experiment_state import read_experiment_state
 
 config = {
     # 'index': 3,
@@ -48,14 +46,15 @@ def eval(config):
 
     rewards = []
 
-    for i in range(config['repeat']):
+    for i in tqdm(range(config['repeat'])):
         obs = env.reset()
         done = False
         step = 0
         while not done:
             # action = np.array([0, 0, 0, 0])
             # action = env.action_space.low
-            obs, reward, done, info = env.step(np.array([config['alpha'], config['beta'], config['gamma'], config['c']]))
+            obs, reward, done, info = env.step(
+                np.array([config['alpha'], config['beta'], config['gamma'], config['c']]))
 
             # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
 
@@ -65,8 +64,8 @@ def eval(config):
             step += 1
 
     env.close()
-    avg_reward = sum(rewards) / len(rewards)
-    return tune.report(avg_reward=avg_reward)
+    episode_reward = sum(rewards)
+    return tune.report(episode_reward=episode_reward)
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
@@ -75,6 +74,7 @@ def eval(config):
 #     {'alpha': -2.6989700043360187, 'beta': 0.3590219426416679, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
 #     {'alpha': -2.6989700043360187, 'beta': 0.5528419686577808, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812}
 # ]
+points_to_evaluate = [dict(alpha=math.log10(0.001), beta=math.log10(5), gamma=math.log10(200), c=math.log10(1))]
 
 # from the best of experiment state
 # points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_22-01-59.json', 24)
@@ -94,13 +94,13 @@ if __name__ == '__main__':
         config=config,
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
-                                  # points_to_evaluate=points_to_evaluate,
-                                  metric="avg_reward", mode="max", verbose=1, random_search_steps=12),
-        scheduler=AsyncHyperBandScheduler(metric='avg_reward', mode='max'),
+                                  points_to_evaluate=points_to_evaluate,
+                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
+        scheduler=AsyncHyperBandScheduler(metric='episode_reward', mode='max'),
         num_samples=1440,
     )
 
     print("Best config: ", analysis.get_best_config(
-        metric="avg_reward", mode="max"))
+        metric="episode_reward", mode="max"))
 
     print(analysis.results_df)
