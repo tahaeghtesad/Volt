@@ -31,4 +31,4 @@ class ReusablePool:
         self.deleted += 1
         # self._clean_up(reusable)
         # self._reusables.append(reusable)
-        reusable.close()
+        reusable.quit()
