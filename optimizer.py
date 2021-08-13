@@ -58,7 +58,7 @@ def eval(config):
 
             # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
             # tune.report(reward=reward)
-            rewards.append(reward)
+            rewards.append(-reward)
 
     env.close()
     episode_reward = sum(rewards)
@@ -92,12 +92,12 @@ if __name__ == '__main__':
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
                                   points_to_evaluate=points_to_evaluate,
-                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
-        scheduler=AsyncHyperBandScheduler(metric='episode_reward', mode='max'),
+                                  metric="episode_reward", mode="min", verbose=1, random_search_steps=12),
+        # scheduler=AsyncHyperBandScheduler(metric='episode_reward', mode='min'),
         num_samples=1440,
     )
 
     print("Best config: ", analysis.get_best_config(
-        metric="episode_reward", mode="max"))
+        metric="episode_reward", mode="min"))
 
     print(analysis.results_df)
