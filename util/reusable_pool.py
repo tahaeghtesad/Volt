@@ -28,7 +28,7 @@ class ReusablePool:
 
     def release(self, reusable):
         self.logger.info(f'Releasing an instance. Running: {self.created - self.deleted}')
-        self.deleted -= 1
+        self.deleted += 1
         # self._clean_up(reusable)
         # self._reusables.append(reusable)
         reusable.close()
