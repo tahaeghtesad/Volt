@@ -3,6 +3,7 @@ import math
 import numpy as np
 import ray
 from ray import tune
+from ray.tune import Trainable
 from ray.tune.schedulers import FIFOScheduler, AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
 
@@ -40,28 +41,38 @@ config = {
 }
 
 
-def eval(config):
-    env = RemoteEnv('localhost', 6985, config)
+class VC(Trainable):
 
-    rewards = []
+    def __init__(self, config=None, logger_creator=None):
+        super().__init__(config, logger_creator)
+        self.env = None
 
-    obs = env.reset()
-    done = False
-    for step in range(config['T']):
-        # action = np.array([0, 0, 0, 0])
-        # action = env.action_space.low
-        obs, reward, done, info = env.step(
-            np.array([config['alpha'], config['beta'], config['gamma'], config['c']]))
+    def step(self):
+        rewards = []
 
-        # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
+        obs = self.env.reset()
+        done = False
+        for step in range(self.config['T']):
+            # action = np.array([0, 0, 0, 0])
+            # action = env.action_space.low
+            obs, reward, done, info = self.env.step(
+                np.array([self.config['alpha'], self.config['beta'], self.config['gamma'], self.config['c']]))
 
-        # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
-        # tune.report(reward=reward)
-        rewards.append(reward)
-        tune.report(reward=reward, episode_reward=sum(rewards))
+            # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
 
-    env.close()
-    # return tune.report(episode_reward=sum(rewards))
+            # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
+            # tune.report(reward=reward)
+            rewards.append(reward)
+            # tune.report(reward=reward, episode_reward=sum(rewards))
+
+        return tune.report(episode_reward=sum(rewards))
+
+    def reset_config(self, new_config):
+        return True
+
+    def setup(self, config):
+        self.env = RemoteEnv('localhost', 6985, self.config)
+        super().setup(config)
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
@@ -77,27 +88,31 @@ points_to_evaluate = [dict(alpha=math.log10(0.001), beta=math.log10(5), gamma=ma
 
 
 search_space = {
-    'alpha': (-config['search_range'], config['search_range']),
+    'alpha': (-config['search_range'], 0),
     'beta': (-config['search_range'], config['search_range']),
     'gamma': (-config['search_range'], config['search_range']),
     'c': (-config['search_range'], config['search_range']),
 }
 
 if __name__ == '__main__':
-    ray.init(num_cpus=16)
+    ray.init(num_cpus=10)
     analysis = tune.run(
-        eval,
+        VC,
         config=config,
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
                                   points_to_evaluate=points_to_evaluate,
                                   metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
-        scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
+        # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
         # scheduler=FIFOScheduler(),
+        stop={
+            'training_iteration': 1,
+        },
         num_samples=-1,
+        reuse_actors=True,
     )
 
     print("Best config: ", analysis.get_best_config(
-        metric="reward", mode="max"))
+        metric="episode_reward", mode="max"))
 
     print(analysis.results_df)
