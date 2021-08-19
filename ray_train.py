@@ -25,6 +25,8 @@ config.update({
     'env_config': {
         # Index of trained node -> [0, env.n]
         # 'index': 0,
+        'voltage_threshold': 0.05,
+        'power_injection_cost': 0.01,
 
         # Default hyper parameters for nodes not trained.
         'defaults': {
@@ -41,16 +43,17 @@ config.update({
         'history_size': 1,
 
         # Episode length
-        'T': 350,
+        'T': 200,
+        'repeat': 50,
     },
 
-    "lr": 5e-5,
+    # "lr": 5e-5,
 
     # Clip param for the value function. Note that this is sensitive to the
     # scale of the rewards. If your expected V is large, increase this.
-    "vf_clip_param": 400.0,
+    # "vf_clip_param": 400.0,
 
-    "num_workers": 12,
+    "num_workers": 16,
     # Whether to compute priorities on workers.
 
     # Number of GPU
@@ -64,7 +67,7 @@ if __name__ == '__main__':
         result = tune.run(
             ppo.PPOTrainer,
             # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
-            stop=MaximumIterationStopper(1000),
+            stop=MaximumIterationStopper(2000),
             config=config,
             checkpoint_freq=10,
             checkpoint_at_end=True
