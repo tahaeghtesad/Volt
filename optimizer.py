@@ -65,7 +65,7 @@ class VC(Trainable):
             rewards.append(reward)
             # tune.report(reward=reward, episode_reward=sum(rewards))
 
-        return tune.report(episode_reward=sum(rewards))
+        return dict(episode_reward=sum(rewards))
 
     def reset_config(self, new_config):
         return True
