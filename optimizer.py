@@ -58,9 +58,10 @@ def eval(config):
         # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
         # tune.report(reward=reward)
         rewards.append(reward)
+        tune.report(reward=reward)
 
     env.close()
-    return tune.report(episode_reward=sum(rewards))
+    # return tune.report(episode_reward=sum(rewards))
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
@@ -76,7 +77,7 @@ points_to_evaluate = [dict(alpha=math.log10(0.001), beta=math.log10(5), gamma=ma
 
 
 search_space = {
-    'alpha': (-config['search_range'], config['search_range']),
+    'alpha': (-config['search_range'], 0),
     'beta': (-config['search_range'], config['search_range']),
     'gamma': (-config['search_range'], config['search_range']),
     'c': (-config['search_range'], config['search_range']),
@@ -90,13 +91,13 @@ if __name__ == '__main__':
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
                                   points_to_evaluate=points_to_evaluate,
-                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
-        # scheduler=AsyncHyperBandScheduler(metric='avg_reward', mode='max'),
+                                  metric="reward", mode="max", verbose=1, random_search_steps=12),
+        scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
         # scheduler=FIFOScheduler(),
         num_samples=-1,
     )
 
     print("Best config: ", analysis.get_best_config(
-        metric="episode_reward", mode="max"))
+        metric="reward", mode="max"))
 
     print(analysis.results_df)
