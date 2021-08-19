@@ -97,7 +97,7 @@ search_space = {
 }
 
 if __name__ == '__main__':
-    ray.init(num_cpus=10)
+    ray.init(num_cpus=4)
     analysis = tune.run(
         VC,
         config=config,
