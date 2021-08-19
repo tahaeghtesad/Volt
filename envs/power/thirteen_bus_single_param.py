@@ -9,6 +9,7 @@ class SingleParamThirteenBus(gym.Env):
         self.env = ThirteenBus(engine_pool, config)
 
         self.action_space = gym.spaces.Box(-config['search_range'], config['search_range'], (4,))
+        self.action_space.high[0] = 0.  # TODO remove this!
 
         self.observation_space = self.env.observation_space
 

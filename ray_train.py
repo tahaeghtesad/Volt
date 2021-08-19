@@ -53,7 +53,7 @@ config.update({
     # scale of the rewards. If your expected V is large, increase this.
     # "vf_clip_param": 400.0,
 
-    "num_workers": 16,
+    "num_workers": 10,
     # Whether to compute priorities on workers.
 
     # Number of GPU
