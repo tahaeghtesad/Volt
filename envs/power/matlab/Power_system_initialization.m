@@ -164,3 +164,15 @@ global g_G
 g_data = Data;
 g_T = T;
 g_G = G;
+
+var.v=zeros(n,T);
+var.v_phase=zeros(n,T);
+var.v_c=zeros(n,T);
+var.v_c_phase=zeros(n,T);
+var.q=zeros(n,T);
+var.fes=zeros(T);
+var.f=zeros(T);
+var.lambda_bar=zeros(n,T+1);
+var.lambda_un=zeros(n,T+1);
+var.xi=zeros(n,T+1);
+var.q_hat=zeros(n,T);
