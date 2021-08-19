@@ -1,14 +1,13 @@
-function [var] = optdist_vc_ML(params, t)
+function optdist_vc_ML(params, t)
 
     global g_data
     global g_T
     global g_G
-    global g_var
+    global var
 
 Data = g_data;
-T = g_T
-G = g_G
-var = g_var
+T = g_T;
+G = g_G;
 
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
@@ -218,9 +217,6 @@ f_func = @(qqq) sum(1/2*a.*(qqq.^2) + b.*qqq);
         var.lambda_un(:,t+1)=lambda_un(:,t+1);
         var.xi(:,t+1)=xi(:,t+1);
         var.q_hat(:,t)=q_hat(:,t);
-        
-        
-        
         
     end
 % end

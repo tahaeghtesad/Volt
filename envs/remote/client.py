@@ -23,13 +23,17 @@ class RemoteEnv(gym.Env):
         self.T = env_info['T']
         self.n = env_info['n']
 
+        self.step_number = 0
+
     def step(self, action):
+        self.step_number += 1
         self.messenger.send_message(dict(event='step', data=action))
 
         result = self.messenger.get_message()
         return result['obs'], result['reward'], result['done'], result['info']
 
     def reset(self):
+        self.step_number = 0
         self.messenger.send_message(dict(event='reset'))
 
         result = self.messenger.get_message()

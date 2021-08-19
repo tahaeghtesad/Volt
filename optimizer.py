@@ -11,7 +11,7 @@ from envs.remote.client import RemoteEnv
 config = {
     # 'index': 3,
     'voltage_threshold': 0.05,
-    'power_injection_cost': 0.25,
+    'power_injection_cost': 0.01,
 
     # Default hyper parameters for nodes not trained.
     'defaults': {
@@ -33,10 +33,10 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 3000,
+    'T': 200,
 
     # Repeat
-    'repeat': 1
+    'repeat': 50
 }
 
 

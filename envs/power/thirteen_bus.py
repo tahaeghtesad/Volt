@@ -45,8 +45,7 @@ class ThirteenBus(gym.Env):
 
         init_vol = (1 - 0.9025) * np.random.rand(self.n, 1) + 0.9025
 
-        self.engine.workspace['T'] = self.T
-        self.engine.workspace['init_vol'] = matlab.double(init_vol.tolist())
+        self.engine.workspace['T'] = 20000
 
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
@@ -62,11 +61,17 @@ class ThirteenBus(gym.Env):
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         # action = np.power(10, action)
         self.step_number += 1
-        var = self.engine.step(matlab.double(action[0 * self.n: 1 * self.n].reshape(self.n, 1).tolist()),
-                               matlab.double(action[1 * self.n: 2 * self.n].reshape(self.n, 1).tolist()),
-                               matlab.double(action[2 * self.n: 3 * self.n].reshape(self.n, 1).tolist()),
-                               matlab.double(action[3 * self.n: 4 * self.n].reshape(self.n, 1).tolist()),
-                               self.step_number, stdout=self.null_stream)
+        try:
+            var = self.engine.step(matlab.double(action[0 * self.n: 1 * self.n].reshape(self.n, 1).tolist()),
+                                   matlab.double(action[1 * self.n: 2 * self.n].reshape(self.n, 1).tolist()),
+                                   matlab.double(action[2 * self.n: 3 * self.n].reshape(self.n, 1).tolist()),
+                                   matlab.double(action[3 * self.n: 4 * self.n].reshape(self.n, 1).tolist()),
+                                   self.env_config['repeat'],
+                                   self.step_number, stdout=self.null_stream)
+        except Exception as e:
+            self.logger.error(f'Step: {self.step_number}')
+            raise e
+
 
         v = np.array(var['v'], dtype=np.float)
         q = np.array(var['q'], dtype=np.float)

@@ -1,21 +1,21 @@
 
 clc; close all;
-T = 500;
+T = 1000;
+repeat = 5;
 Power_system_initialization
+
+global var
+
 % Algorithm parameters
-for t=1:T
+tic;
+for t=1:T/repeat
 alpha = 0.001*ones(n,1);
 beta = 5*ones(n,1);
 gamma = 200*ones(n,1);
 c=1*ones(n,1);
-
-
-
-
-% [v,v_phase,v_c,v_c_phase, q,fes,f,lambda_bar,lambda_un,xi,q_hat] = Input_parameter(Data,G,T,t);
-
-[var] = step(alpha, beta, gamma, c, t);
+    step(alpha, beta, gamma, c, repeat, t);
 end
+toc;
 
 % PLOTS%................
  m1=1:1:T-1 ;
@@ -43,7 +43,7 @@ end
     
     
     figure;
-    plot(m1,var.v_phase,'Linewidth',2);
+    plot(m1,var.v_phase(:,1:T-1),'Linewidth',2);
     grid on;
     xlim([0 T]);
     xlabel('Iterations') ;
