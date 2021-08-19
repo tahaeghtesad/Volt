@@ -58,7 +58,7 @@ def eval(config):
         # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
         # tune.report(reward=reward)
         rewards.append(reward)
-        tune.report(reward=reward)
+        tune.report(reward=reward, episode_reward=sum(rewards))
 
     env.close()
     # return tune.report(episode_reward=sum(rewards))
@@ -77,21 +77,21 @@ points_to_evaluate = [dict(alpha=math.log10(0.001), beta=math.log10(5), gamma=ma
 
 
 search_space = {
-    'alpha': (-config['search_range'], 0),
+    'alpha': (-config['search_range'], config['search_range']),
     'beta': (-config['search_range'], config['search_range']),
     'gamma': (-config['search_range'], config['search_range']),
     'c': (-config['search_range'], config['search_range']),
 }
 
 if __name__ == '__main__':
-    ray.init(num_cpus=20)
+    ray.init(num_cpus=16)
     analysis = tune.run(
         eval,
         config=config,
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
                                   points_to_evaluate=points_to_evaluate,
-                                  metric="reward", mode="max", verbose=1, random_search_steps=12),
+                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
         scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
         # scheduler=FIFOScheduler(),
         num_samples=-1,
