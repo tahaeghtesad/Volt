@@ -45,7 +45,7 @@ class VC(Trainable):
 
     def __init__(self, config=None, logger_creator=None):
         super().__init__(config, logger_creator)
-        self.env = None
+        self.env = RemoteEnv('localhost', 6985, self.config)
 
     def step(self):
         rewards = []
@@ -71,8 +71,10 @@ class VC(Trainable):
         return True
 
     def setup(self, config):
-        self.env = RemoteEnv('localhost', 6985, self.config)
         super().setup(config)
+
+    def cleanup(self):
+        self.env.close()
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
