@@ -47,6 +47,7 @@ class ThirteenBus(gym.Env):
 
         self.engine.workspace['T'] = 20000
 
+        self.engine.eval('clc', nargout=0)
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         # obs, reward, done, info = self.step(np.repeat(np.array([self.env_config['defaults']['alpha'],

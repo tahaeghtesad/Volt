@@ -30,13 +30,13 @@ class ServerThread(Thread):
         logger = logging.getLogger(__name__)
         logger.info(f'Starting MATLAB engine {i}...')
         engine = matlab.engine.start_matlab()
-        engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\matlab')
+        engine.addpath('C:\\Users\\Taha\\PycharmProjects\\Volt\\envs\\power\\matlab')
         logger.info(f'MATLAB engine {i} started in {time.time() - start:.2f} seconds.')
         return engine
 
     @staticmethod
     def clean_matlab(engine):
-        engine.eval('clc', nargout=0)
+        engine.quit()
 
     def run(self) -> None:
         self.logger.info('Starting a remote environment...')
