@@ -26,7 +26,7 @@ config.update({
         # Index of trained node -> [0, env.n]
         # 'index': 0,
         'voltage_threshold': 0.05,
-        'power_injection_cost': 0.01,
+        'power_injection_cost': 0.2,
 
         # Default hyper parameters for nodes not trained.
         'defaults': {
@@ -43,8 +43,8 @@ config.update({
         'history_size': 1,
 
         # Episode length
-        'T': 200,
-        'repeat': 50,
+        'T': 100,
+        'repeat': 25,
     },
 
     # "lr": 5e-5,
@@ -54,7 +54,6 @@ config.update({
     # "vf_clip_param": 400.0,
 
     "num_workers": 4,
-    # Whether to compute priorities on workers.
 
     # Number of GPU
     "num_gpus": 1 / 1,
