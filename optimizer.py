@@ -12,7 +12,6 @@ from envs.remote.client import RemoteEnv
 config = {
     # 'index': 3,
     'voltage_threshold': 0.05,
-    'power_injection_cost': 0.2,
 
     # Default hyper parameters for nodes not trained.
     'defaults': {
@@ -37,7 +36,7 @@ config = {
     'T': 100,
 
     # Repeat
-    'repeat': 25
+    'repeat': 1
 }
 
 
@@ -90,7 +89,7 @@ points_to_evaluate = [dict(alpha=math.log10(0.001), beta=math.log10(5), gamma=ma
 
 
 search_space = {
-    'alpha': (-config['search_range'], 0),
+    'alpha': (-config['search_range'], config['search_range']),
     'beta': (-config['search_range'], config['search_range']),
     'gamma': (-config['search_range'], config['search_range']),
     'c': (-config['search_range'], config['search_range']),
