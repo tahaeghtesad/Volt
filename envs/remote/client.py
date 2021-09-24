@@ -12,18 +12,26 @@ from tqdm import tqdm
 class RemoteEnv(gym.Env):
 
     def __init__(self, host, port, config):
+        self.host = host
+        self.port = port
+        self.config = config
+        self.messenger = None
+
+        self.step_number = 0
+        self.epoch_number = 0
+        self.__init_messenger()
+
+    def __init_messenger(self):
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        conn.connect((host, port))
+        conn.connect((self.host, self.port))
         self.messenger = Messenger(conn)
-        self.messenger.send_message(dict(event='start', config=config))
+        self.messenger.send_message(dict(event='start', config=self.config))
 
         env_info = self.messenger.get_message()
         self.action_space = env_info['action_space']
         self.observation_space = env_info['observation_space']
         self.T = env_info['T']
         self.n = env_info['n']
-
-        self.step_number = 0
 
     def step(self, action):
         self.step_number += 1
@@ -34,6 +42,12 @@ class RemoteEnv(gym.Env):
 
     def reset(self):
         self.step_number = 0
+        self.epoch_number += 1
+
+        if self.epoch_number % 100 == 0:
+            self.messenger.conn.close()
+            self.__init_messenger()
+
         self.messenger.send_message(dict(event='reset'))
 
         result = self.messenger.get_message()
