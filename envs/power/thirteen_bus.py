@@ -37,7 +37,7 @@ class ThirteenBus(gym.Env):
         self.action_space = gym.spaces.Box(-self.env_config['search_range'], self.env_config['search_range'], (4 * self.n,))
         self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
 
-        self.reward_history = []
+        self.converge_history = []
 
     def reset(self):
         self.episode += 1
@@ -45,7 +45,7 @@ class ThirteenBus(gym.Env):
 
         init_vol = (1 - 0.9025) * np.random.rand(self.n, 1) + 0.9025
 
-        self.engine.workspace['T'] = 20000
+        self.engine.workspace['T'] = int(1.5 * self.T + 1)
 
         self.engine.eval('clc', nargout=0)
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
@@ -55,7 +55,7 @@ class ThirteenBus(gym.Env):
         #                                               self.env_config['defaults']['gamma'],
         #                                               self.env_config['defaults']['c']]), self.n))
 
-        self.reward_history = []
+        self.converge_history = []
 
         return init_vol.flatten()
 
@@ -73,7 +73,6 @@ class ThirteenBus(gym.Env):
             self.logger.error(f'Step: {self.step_number}')
             raise e
 
-
         v = np.array(var['v'], dtype=np.float)
         q = np.array(var['q'], dtype=np.float)
         fes = np.array([var['fes']], dtype=np.float)
@@ -83,17 +82,22 @@ class ThirteenBus(gym.Env):
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
 
+        converged = True
+
         loss = 0
         for i in range(self.n):
-            loss += math.pow(max(0, math.fabs(v[i] - 1) - self.env_config['voltage_threshold']), 2)\
-                    + self.env_config['power_injection_cost'] * q[i] * q[i]
+            phase_loss = math.pow(max(0, math.fabs(v[i] - 1) - self.env_config['voltage_threshold']), 2)
+            if phase_loss > 1e-7:
+                converged = False
+            loss += phase_loss
 
-        reward = - loss[0]
-        self.reward_history.append(reward)
-        if len(self.reward_history) > 32:
-            del self.reward_history[0]
+        self.converge_history.append(converged)
+        if len(self.converge_history) > 32:
+            del self.converge_history[0]
 
-        done = self.step_number == self.T
+        done = self.step_number == self.T or all(self.converge_history)
+        reward = 0 if converged else -1
+        reward += -loss
 
         # if done:
         #     print(f'Step: {self.step_number}')
