@@ -1,7 +1,7 @@
 
 clc; close all;
-T = 1000;
-repeat = 5;
+T = 10;
+repeat = 1;
 Power_system_initialization
 
 global var
@@ -13,6 +13,7 @@ alpha = 0.001*ones(n,1);
 beta = 5*ones(n,1);
 gamma = 200*ones(n,1);
 c=1*ones(n,1);
+
     step(alpha, beta, gamma, c, repeat, t);
 end
 toc;

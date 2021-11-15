@@ -30,7 +30,7 @@ class ServerThread(Thread):
         logger = logging.getLogger(__name__)
         logger.info(f'Starting MATLAB engine {i}...')
         engine = matlab.engine.start_matlab()
-        engine.addpath('C:\\Users\\Taha\\PycharmProjects\\Volt\\envs\\power\\matlab')
+        engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\matlab')
         logger.info(f'MATLAB engine {i} started in {time.time() - start:.2f} seconds.')
         return engine
 
@@ -66,7 +66,7 @@ class ServerThread(Thread):
                     self.finished = True
 
             except Exception as e:
-                self.logger.error(f'Client disconnected - {type(e)} - {e}')
+                self.logger.exception(f'Client disconnected - {type(e)} - {e}')
                 self.finished = True
                 self.messenger.conn.close()
                 self.env.close()

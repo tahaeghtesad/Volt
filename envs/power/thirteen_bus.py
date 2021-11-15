@@ -87,17 +87,17 @@ class ThirteenBus(gym.Env):
         loss = 0
         for i in range(self.n):
             phase_loss = math.pow(max(0, math.fabs(v[i] - 1) - self.env_config['voltage_threshold']), 2)
-            if phase_loss > 1e-7:
+            if phase_loss > 0:
                 converged = False
             loss += phase_loss
 
         self.converge_history.append(converged)
-        if len(self.converge_history) > 32:
+        if len(self.converge_history) > 4:
             del self.converge_history[0]
 
         done = self.step_number == self.T or all(self.converge_history)
         reward = 0 if converged else -1
-        reward += -loss
+        reward -= loss
 
         # if done:
         #     print(f'Step: {self.step_number}')

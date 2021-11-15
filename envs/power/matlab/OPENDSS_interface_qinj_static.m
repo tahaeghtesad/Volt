@@ -7,8 +7,8 @@ function [V_phase_OPENDSS] = OPENDSS_interface_qinj_static(t,load_var,q_inj,Data
 if DSSStartOK
 
 DSSObj.AllowForms = false;
-DSSText.Command = 'Set DataPath =C:\Users\Taha\PycharmProjects\Volt\envs\power\matlab';
-DSSText.Command = 'Compile IEEE13Nodeckt.dss';   
+DSSText.Command = 'Set DataPath =C:\Users\teghtesa\PycharmProjects\Volt\envs\power\matlab';
+DSSText.Command = 'Compile IEEE13Nodeckt.dss';
 lm=load_var;
 % lm=1.2;
 DSSText.Command=['set mode =snap loadmult=' num2str(lm)];

@@ -26,7 +26,7 @@ config.update({
         # Index of trained node -> [0, env.n]
         # 'index': 0,
         'voltage_threshold': 0.05,
-        'power_injection_cost': 0.2,
+        # 'power_injection_cost': 0.2,
 
         # Default hyper parameters for nodes not trained.
         'defaults': {
@@ -43,8 +43,8 @@ config.update({
         'history_size': 1,
 
         # Episode length
-        'T': 100,
-        'repeat': 25,
+        'T': 50,
+        'repeat': 1,
     },
 
     # "lr": 5e-5,

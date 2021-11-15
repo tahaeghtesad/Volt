@@ -21,7 +21,7 @@ def eval(i):
     start = datetime.now()
 
     config = {
-        'index': 3,
+        'voltage_threshold': 0.05,
 
         # Default hyper parameters for nodes not trained.
         'defaults': {
@@ -30,6 +30,12 @@ def eval(i):
             'gamma': 200.0,
             'c': 1,
         },
+        # 'defaults': {
+        #     'alpha': -4.89428,
+        #     'beta': -4.70154,
+        #     'gamma': 4.87959,
+        #     'c': -3.5647,
+        # },
 
         # Search range around the default parameters
         'search_range': 5,
@@ -38,16 +44,18 @@ def eval(i):
         'history_size': 1,
 
         # Episode length
-        'T': 500,
+        'T': 20,
+        'repeat': 1,
     }
     env = RemoteEnv('localhost', 6985, config)
-
+    v_table = np.zeros((29, env.T))
     print(f'Env created. Action Space: {env.action_space}, Observation Space: {env.observation_space}')
 
     obs = env.reset()
     done = False
     rewards = []
     step = 0
+
     while not done:
         # action = np.array([0, 0, 0, 0])
         # action = env.action_space.low
@@ -56,6 +64,7 @@ def eval(i):
                            config['defaults']['gamma'],
                            config['defaults']['c']]))
         obs, reward, done, info = env.step(action)
+        v_table[:, env.step_number - 1] = info['v'].reshape((29,))
 
         # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
 
@@ -65,7 +74,7 @@ def eval(i):
 
     print(f'Took {datetime.now() - start:} (s).')
     env.close()
-    return rewards
+    return rewards, v_table
 
 
 if __name__ == '__main__':
@@ -73,7 +82,9 @@ if __name__ == '__main__':
     with multiprocessing.Pool(12) as p:
         responses = p.map(eval, ranges)
     for i in range(len(ranges)):
-        print(f'range: {ranges[i]} - reward: {np.array(responses[i]).sum()}')
-        plt.plot(responses[i][:-1], label=f'{ranges[i]}')
-    plt.legend()
-    plt.show()
+        print(f'range: {ranges[i]} - reward: {np.array(responses[i][0]).sum()}')
+        plt.plot(responses[i][0], label=f'{ranges[i]}')
+        plt.show()
+
+        plt.plot(responses[i][1].T)
+        plt.show()
