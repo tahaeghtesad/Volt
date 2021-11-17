@@ -66,9 +66,9 @@ if __name__ == '__main__':
         result = tune.run(
             ppo.PPOTrainer,
             # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
-            stop=MaximumIterationStopper(2000),
+            stop=MaximumIterationStopper(100),
             config=config,
-            checkpoint_freq=10,
+            checkpoint_freq=1,
             checkpoint_at_end=True
         )
     except KeyboardInterrupt:

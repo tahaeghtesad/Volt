@@ -8,8 +8,8 @@ class SingleParamThirteenBus(gym.Env):
     def __init__(self, engine_pool, config):
         self.env = ThirteenBus(engine_pool, config)
 
-        self.action_space = gym.spaces.Box(np.log10(np.array([1e-5, 0.1,  100.0, 0.1])),
-                                           np.log10(np.array([1.0, 10.0, 300.0, 10.0])))
+        self.action_space = gym.spaces.Box(np.log10(np.array([1e2, 1e-3, 1e-1, 1e-1])),
+                                           np.log10(np.array([1e-5, 1e3, 1e5, 1e4])))
 
         self.observation_space = self.env.observation_space
 
