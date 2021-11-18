@@ -1,63 +1,114 @@
+import logging
+import os
+import sys
+
+import matplotlib.pyplot as plt
+import numpy as np
 import ray
-import ray.rllib.agents.ddpg as ddpg
+import ray.rllib.agents.ppo as ppo
+from ray.rllib.agents.trainer import COMMON_CONFIG
+from ray.tune import register_env
 from tqdm import tqdm
 
 from envs.remote.client import RemoteEnv
-from ray_train import config
-import numpy as np
-import os
-import matplotlib.pyplot as plt
 
-# checkpoint_path = 'C:\\Users\\Taha\\ray_results\\DDPG_2021-07-09_17-27-33\\DDPG_volt_dab9d_00003_3_actor_hidden_activation=tanh,buffer_size=50000,critic_hidden_activation=tanh,final_scale=0.01,ou_base_scal_2021-07-09_17-28-37\\checkpoint_000350\\\\checkpoint-350'
+logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-# assert os.path.exists(checkpoint_path + '.tune_metadata')
+config = dict()
 
-# ray.init(address='auto', _redis_password='5241590000000000')
+config.update(COMMON_CONFIG)
+config.update(ppo.DEFAULT_CONFIG)
 
-config = {
-    'index': 3,
+# My config!
+config.update({
 
-    # Default hyper parameters for nodes not trained.
-    'defaults': {
-        'alpha': 0.001,
-        'beta': 5.0,
-        'gamma': 200.0,
-        'c': 1,
+    'env': 'volt',
+    'env_config': {
+        # Index of trained node -> [0, env.n]
+        # 'index': 0,
+        'voltage_threshold': 0.05,
+        # 'power_injection_cost': 0.2,
+
+        # Default hyper parameters for nodes not trained.
+        'defaults': {
+            'alpha': 0.001,
+            'beta': 5.0,
+            'gamma': 200.0,
+            'c': 1,
+        },
+
+        # Search range around the default parameters
+        'search_range': 5,
+
+        # Length of history
+        'history_size': 1,
+
+        # Episode length
+        'T': 10,
+        'repeat': 1,
     },
 
-    # Search range around the default parameters
-    'search_range': 5,
+    # "lr": 5e-5,
 
-    # Length of history
-    'history_size': 1,
+    # Clip param for the value function. Note that this is sensitive to the
+    # scale of the rewards. If your expected V is large, increase this.
+    # "vf_clip_param": 400.0,
 
-    # Episode length
-    'T': 500,
+    "num_workers": 1,
+
+    # Number of GPU
+    # "num_gpus": 1 / 1,
+
+    'log_level': logging.INFO,
+
+    'evaluation_config': {
+        'explore': False
+    },
+
+    'explore': False,
+})
+
+
+def load_trainer(remote_path):
+    destination = os.environ['TMPDIR'] + 'checkpoint'
+    print(f'Copying checkpoint file from {remote_path} to {destination}')
+    os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path} {destination}')
+    os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path}.tune_metadata {destination}.tune_metadata')
+    print(f'Restoring trainer.')
+    trainer = ppo.PPOTrainer(config=config, env=None)
+    trainer.restore(destination)
+    return trainer
+
+
+register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
+remote_path = '~/ray_results/PPO_2021-11-17_16-54-17/PPO_volt_4b36b_00000_0_2021-11-17_16-54-17/checkpoint_000092/checkpoint-92'
+
+ray.init(address='auto', _redis_password='5241590000000000')
+
+env = RemoteEnv('localhost', 6985, config=config['env_config'])
+trainer = load_trainer(remote_path)
+
+values = {
+    'alpha': [],
+    'beta': [],
+    'gamma': [],
+    'c': [],
+    'reward': []
 }
-
-
-# trainer = ddpg.DDPGTrainer(config=config, env='volt')
-# trainer.restore(checkpoint_path)
-
-env = RemoteEnv('localhost', 6985, config=config)
-
 
 for i in tqdm(range(1)):
     step = 0
     done = False
     obs = env.reset()
 
-    values = {
-        'alpha': [],
-        'beta': [],
-        'gamma': [],
-        'c': [],
-        'reward': []
-    }
-
     while not done:
-        # action = trainer.compute_action(obs, explore=False)
-        action = np.log10(np.array([config['defaults']['alpha'], config['defaults']['beta'], config['defaults']['gamma'], config['defaults']['c']]))
+        action = trainer.compute_single_action(obs, explore=False)
+        # action = trainer.get_policy()
+        print(np.power(10, action))
+        # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
+        #                             config['env_config']['defaults']['beta'],
+        #                             config['env_config']['defaults']['gamma'],
+        #                             config['env_config']['defaults']['c']]))
 
         values['alpha'].append(action[0])
         values['beta'].append(action[1])
@@ -66,17 +117,17 @@ for i in tqdm(range(1)):
 
         obs, reward, done, info = env.step(action)
 
-        values['reward'].append(-reward * reward)
+        values['reward'].append(reward)
 
         step += 1
 
-    # plt.plot(values['alpha'], label='$\\alpha$')
-    # plt.plot(values['beta'], label='$\\beta$')
-    # plt.plot(values['gamma'], label='$\\gamma$')
-    # plt.plot(values['c'], label='$\\c$')
-    plt.plot(values['reward'], label='$\\reward$')
 
-    print(sum(values['reward']))
-    plt.show()
-    env.close()
+plt.plot(values['alpha'], label='$\\alpha$')
+plt.plot(values['beta'], label='$\\beta$')
+plt.plot(values['gamma'], label='$\\gamma$')
+plt.plot(values['c'], label='$c$')
+plt.plot(values['reward'], label='$r$')
+plt.legend()
+plt.show()
+env.close()
 

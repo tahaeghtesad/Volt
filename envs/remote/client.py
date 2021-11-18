@@ -1,17 +1,16 @@
+import logging
 import multiprocessing
-
-import gym
 import socket
 
-import numpy as np
+import gym
 
 from util.network_util import Messenger
-from tqdm import tqdm
 
 
 class RemoteEnv(gym.Env):
 
     def __init__(self, host, port, config):
+        self.logger = logging.getLogger(__name__)
         self.host = host
         self.port = port
         self.config = config
@@ -54,6 +53,7 @@ class RemoteEnv(gym.Env):
         return result['obs']
 
     def close(self):
+        self.logger.info('Closing connection.')
         self.messenger.send_message(dict(event='close'))
         self.messenger.conn.close()
 
