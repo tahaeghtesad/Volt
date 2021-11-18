@@ -43,8 +43,6 @@ class ThirteenBus(gym.Env):
         self.episode += 1
         self.step_number = 0
 
-        init_vol = (1 - 0.9025) * np.random.rand(self.n, 1) + 0.9025
-
         self.engine.workspace['T'] = int(1.5 * self.T + 1)
 
         self.engine.eval('clc', nargout=0)
@@ -57,7 +55,7 @@ class ThirteenBus(gym.Env):
 
         self.converge_history = []
 
-        return init_vol.flatten()
+        return np.zeros((self.n, 1))
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         # action = np.power(10, action)
