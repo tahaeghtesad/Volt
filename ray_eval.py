@@ -1,5 +1,7 @@
 import logging
+import multiprocessing.pool
 import os
+import random
 import sys
 
 import matplotlib.pyplot as plt
@@ -70,7 +72,7 @@ config.update({
 
 
 def load_trainer(remote_path):
-    destination = os.environ['TMPDIR'] + 'checkpoint'
+    destination = os.environ['TMPDIR'] + 'checkpoint' + f'{random.randint(1, 10000):06d}'
     print(f'Copying checkpoint file from {remote_path} to {destination}')
     os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path} {destination}')
     os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path}.tune_metadata {destination}.tune_metadata')
@@ -81,53 +83,64 @@ def load_trainer(remote_path):
 
 
 register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
-remote_path = '~/ray_results/PPO_2021-11-17_16-54-17/PPO_volt_4b36b_00000_0_2021-11-17_16-54-17/checkpoint_000092/checkpoint-92'
 
-ray.init(address='auto', _redis_password='5241590000000000')
+def eval_trainer(checkpoint):
+    env = RemoteEnv('localhost', 6985, config=config['env_config'])
+    trainer = load_trainer(f'~/ray_results/PPO_2021-11-18_16-46-03/PPO_volt_4ee23_00000_0_2021-11-18_16-46-03'
+                 f'/checkpoint_000{checkpoint:03d}/checkpoint-{checkpoint}')
 
-env = RemoteEnv('localhost', 6985, config=config['env_config'])
-trainer = load_trainer(remote_path)
+    values = {
+        'alpha': [],
+        'beta': [],
+        'gamma': [],
+        'c': [],
+        'reward': []
+    }
 
-values = {
-    'alpha': [],
-    'beta': [],
-    'gamma': [],
-    'c': [],
-    'reward': []
-}
+    for i in tqdm(range(1)):
+        step = 0
+        done = False
+        obs = env.reset()
+        action = np.zeros(4)
+        reward = 0
 
-for i in tqdm(range(1)):
-    step = 0
-    done = False
-    obs = env.reset()
+        while not done:
+            action = trainer.compute_single_action(obs, explore=False)
+            # action_info = trainer.get_policy().compute_single_action(obs, prev_action=action, prev_reward=reward, explore=False)
+            # action = action_info[0]
+            # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
+            #                             config['env_config']['defaults']['beta'],
+            #                             config['env_config']['defaults']['gamma'],
+            #                             config['env_config']['defaults']['c']]))
 
-    while not done:
-        action = trainer.compute_single_action(obs, explore=False)
-        # action = trainer.get_policy()
-        print(np.power(10, action))
-        # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
-        #                             config['env_config']['defaults']['beta'],
-        #                             config['env_config']['defaults']['gamma'],
-        #                             config['env_config']['defaults']['c']]))
+            values['alpha'].append(action[0])
+            values['beta'].append(action[1])
+            values['gamma'].append(action[2])
+            values['c'].append(action[3])
 
-        values['alpha'].append(action[0])
-        values['beta'].append(action[1])
-        values['gamma'].append(action[2])
-        values['c'].append(action[3])
+            obs, reward, done, info = env.step(action)
 
-        obs, reward, done, info = env.step(action)
+            values['reward'].append(reward)
+            # print(action_info[2]['vf_preds'], reward)
 
-        values['reward'].append(reward)
+            step += 1
 
-        step += 1
+    fig, ax = plt.subplots()
+    ax.set_title(f'Trainer {checkpoint}')
+    ax.plot(values['alpha'], label='$\\alpha$')
+    ax.plot(values['beta'], label='$\\beta$')
+    ax.plot(values['gamma'], label='$\\gamma$')
+    ax.plot(values['c'], label='$c$')
+    ax.plot(values['reward'], label='$r$')
+    ax.legend()
+    logging.getLogger(f'Trainer_{checkpoint}').info(sum(values['reward']))
+    env.close()
 
 
-plt.plot(values['alpha'], label='$\\alpha$')
-plt.plot(values['beta'], label='$\\beta$')
-plt.plot(values['gamma'], label='$\\gamma$')
-plt.plot(values['c'], label='$c$')
-plt.plot(values['reward'], label='$r$')
-plt.legend()
-plt.show()
-env.close()
-
+if __name__ == '__main__':
+    ray.init(address='auto', _redis_password='5241590000000000')
+    with multiprocessing.pool.ThreadPool(4) as p:
+        p.map(eval_trainer, range(10, 101, 10))
+    plt.show()
+    # for checkpoint in [40, 50, 60, 70, 80, 90, 100]:
+    #     eval_trainer(checkpoint)

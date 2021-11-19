@@ -6,12 +6,15 @@ from ray import tune
 from ray.rllib.agents import DefaultCallbacks
 from ray.rllib.agents.trainer import COMMON_CONFIG
 from ray.rllib.evaluation.collectors.simple_list_collector import SimpleListCollector
+from ray.rllib.models import ModelCatalog
+from ray.rllib.models.tf.tf_action_dist import Deterministic
 from ray.tune import register_env
 from ray.tune.stopper import MaximumIterationStopper
 
 from envs.remote.client import RemoteEnv
 
 register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
+ModelCatalog.register_custom_action_dist("deterministic", Deterministic)
 
 config = dict()
 
@@ -45,6 +48,10 @@ config.update({
         # Episode length
         'T': 50,
         'repeat': 1,
+    },
+
+    "model": {
+        "custom_action_dist": "deterministic",
     },
 
     # "lr": 5e-5,
