@@ -14,7 +14,8 @@ from tqdm import tqdm
 
 from envs.remote.client import RemoteEnv
 
-logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 
 config = dict()
 
@@ -46,7 +47,7 @@ config.update({
         'history_size': 1,
 
         # Episode length
-        'T': 10,
+        'T': 15,
         'repeat': 1,
     },
 
@@ -84,10 +85,13 @@ def load_trainer(remote_path):
 
 register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
 
+
 def eval_trainer(checkpoint):
     env = RemoteEnv('localhost', 6985, config=config['env_config'])
-    trainer = load_trainer(f'~/ray_results/PPO_2021-11-18_16-46-03/PPO_volt_4ee23_00000_0_2021-11-18_16-46-03'
-                 f'/checkpoint_000{checkpoint:03d}/checkpoint-{checkpoint}')
+    trainer = load_trainer(
+        f'~/ray_results/'
+        f'PPO_2021-11-18_16-46-03/PPO_volt_4ee23_00000_0_2021-11-18_16-46-03'
+        f'/checkpoint_000{checkpoint:03d}/checkpoint-{checkpoint}')
 
     values = {
         'alpha': [],
@@ -105,7 +109,10 @@ def eval_trainer(checkpoint):
         reward = 0
 
         while not done:
-            action = trainer.compute_single_action(obs, explore=False)
+            # if step < 4:
+            #     action = np.log10(np.array(list(config['env_config']['defaults'].values())))
+            # else:
+            action = trainer.compute_single_action(obs, unsquash_action=True, explore=False)
             # action_info = trainer.get_policy().compute_single_action(obs, prev_action=action, prev_reward=reward, explore=False)
             # action = action_info[0]
             # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
@@ -119,6 +126,9 @@ def eval_trainer(checkpoint):
             values['c'].append(action[3])
 
             obs, reward, done, info = env.step(action)
+            # print(f'obs: {obs}')
+            # print(f'reward: {reward}')
+            print(f'action: {action}')
 
             values['reward'].append(reward)
             # print(action_info[2]['vf_preds'], reward)
@@ -131,16 +141,21 @@ def eval_trainer(checkpoint):
     ax.plot(values['beta'], label='$\\beta$')
     ax.plot(values['gamma'], label='$\\gamma$')
     ax.plot(values['c'], label='$c$')
-    ax.plot(values['reward'], label='$r$')
     ax.legend()
+
+    fig, ax = plt.subplots()
+    ax.plot(values['reward'], label='$r$')
+    ax.set_title(f'Trainer {checkpoint} Reward')
+
     logging.getLogger(f'Trainer_{checkpoint}').info(sum(values['reward']))
     env.close()
 
 
 if __name__ == '__main__':
     ray.init(address='auto', _redis_password='5241590000000000')
-    with multiprocessing.pool.ThreadPool(4) as p:
-        p.map(eval_trainer, range(10, 101, 10))
+    # with multiprocessing.pool.ThreadPool(4) as p:
+    #     p.map(eval_trainer, range(10, 101, 10))
+    eval_trainer(100)
     plt.show()
     # for checkpoint in [40, 50, 60, 70, 80, 90, 100]:
     #     eval_trainer(checkpoint)

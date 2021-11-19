@@ -9,7 +9,7 @@ class SingleParamThirteenBus(gym.Env):
         self.env = ThirteenBus(engine_pool, config)
 
         self.action_space = gym.spaces.Box(np.log10(np.array([1e2, 1e-3, 1e-1, 1e-1])),
-                                           np.log10(np.array([1e-5, 1e3, 1e5, 1e4])))
+                                           np.log10(np.array([1e-10, 1e3, 1e10, 1e4])))
 
         self.observation_space = self.env.observation_space
 

@@ -3,18 +3,12 @@ import logging
 import ray
 import ray.rllib.agents.ppo as ppo
 from ray import tune
-from ray.rllib.agents import DefaultCallbacks
 from ray.rllib.agents.trainer import COMMON_CONFIG
-from ray.rllib.evaluation.collectors.simple_list_collector import SimpleListCollector
-from ray.rllib.models import ModelCatalog
-from ray.rllib.models.tf.tf_action_dist import Deterministic
 from ray.tune import register_env
-from ray.tune.stopper import MaximumIterationStopper
 
 from envs.remote.client import RemoteEnv
 
 register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
-ModelCatalog.register_custom_action_dist("deterministic", Deterministic)
 
 config = dict()
 
@@ -50,17 +44,13 @@ config.update({
         'repeat': 1,
     },
 
-    "model": {
-        "custom_action_dist": "deterministic",
-    },
-
     # "lr": 5e-5,
 
     # Clip param for the value function. Note that this is sensitive to the
     # scale of the rewards. If your expected V is large, increase this.
     # "vf_clip_param": 400.0,
 
-    "num_workers": 4,
+    "num_workers": 6,
 
     # Number of GPU
     "num_gpus": 1 / 1,
@@ -72,8 +62,10 @@ if __name__ == '__main__':
     try:
         result = tune.run(
             ppo.PPOTrainer,
-            # stop=TrialPlateauStopper(metric='episode_reward_mean', std=0.01, num_results=100, grace_period=500_000),
-            stop=MaximumIterationStopper(100),
+            stop={
+                    "episode_reward_min": -2.06
+            },
+            # stop=MaximumIterationStopper(100),
             config=config,
             checkpoint_freq=1,
             checkpoint_at_end=True
