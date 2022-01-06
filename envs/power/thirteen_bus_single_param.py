@@ -20,7 +20,6 @@ class SingleParamThirteenBus(gym.Env):
         return self.env.reset()
 
     def step(self, action: np.ndarray):
-        action = np.power(10, action)
         full_action = np.concatenate((
             np.ones(self.env.n) * action[0],
             np.ones(self.env.n) * action[1],

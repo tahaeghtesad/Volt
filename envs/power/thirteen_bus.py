@@ -34,7 +34,8 @@ class ThirteenBus(gym.Env):
         self.step_number = 0
         self.episode = 0
 
-        self.action_space = gym.spaces.Box(-self.env_config['search_range'], self.env_config['search_range'], (4 * self.n,))
+        self.action_space = gym.spaces.Box(np.log10(np.repeat(np.array([1e2, 1e-3, 1e-1, 1e-1]), self.n)),
+                                           np.log10(np.repeat(np.array([1e-10, 1e3, 1e10, 1e4]), self.n)))
         self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
 
         self.converge_history = []
@@ -58,7 +59,7 @@ class ThirteenBus(gym.Env):
         return np.zeros((self.n, 1))
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
-        # action = np.power(10, action)
+        action = np.power(10, action)
         self.step_number += 1
         try:
             var = self.engine.step(matlab.double(action[0 * self.n: 1 * self.n].reshape(self.n, 1).tolist()),
