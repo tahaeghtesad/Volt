@@ -57,8 +57,14 @@ class VC(Trainable):
             for step in range(self.config['T']):
                 # action = np.array([0, 0, 0, 0])
                 # action = env.action_space.low
+                # np.concatenate((
+                #         alpha * np.ones(env.n),
+                #         beta * np.ones(env.n),
+                #         gamma * np.ones(env.n),
+                #         c * np.ones(env.n),
+                #     ))
                 obs, reward, done, info = self.env.step(
-                    np.array([self.config['alpha'], self.config['beta'], self.config['gamma'], self.config['c']]))
+                    np.repeat(np.array([self.config['alpha'], self.config['beta'], self.config['gamma'], self.config['c']]), self.env.n))
 
                 # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
 
