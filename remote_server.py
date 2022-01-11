@@ -45,7 +45,7 @@ class ServerThread(Thread):
         assert info['event'] == 'start', 'Client Error.'
 
         self.env = Historitized(OneTwentyThreeBus(self.engine_pool, info['config']), info['config']['history_size'])
-        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.env.T))
+        self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=self.env.env.n, T=self.env.env.T))
 
         while not self.finished:
             try:

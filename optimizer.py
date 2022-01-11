@@ -51,9 +51,9 @@ class VC(Trainable):
     def step(self):
         rewards = []
 
-        obs = self.env.reset()
         done = False
         for epoch in range(self.config['epochs']):
+            obs = self.env.reset()
             for step in range(self.config['T']):
                 # action = np.array([0, 0, 0, 0])
                 # action = env.action_space.low
