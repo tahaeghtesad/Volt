@@ -33,10 +33,12 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 100,
+    'T': 20,
 
     # Repeat
-    'repeat': 1
+    'repeat': 1,
+
+    'epochs': 30
 }
 
 
@@ -51,20 +53,21 @@ class VC(Trainable):
 
         obs = self.env.reset()
         done = False
-        for step in range(self.config['T']):
-            # action = np.array([0, 0, 0, 0])
-            # action = env.action_space.low
-            obs, reward, done, info = self.env.step(
-                np.array([self.config['alpha'], self.config['beta'], self.config['gamma'], self.config['c']]))
+        for epoch in range(self.config['epochs']):
+            for step in range(self.config['T']):
+                # action = np.array([0, 0, 0, 0])
+                # action = env.action_space.low
+                obs, reward, done, info = self.env.step(
+                    np.array([self.config['alpha'], self.config['beta'], self.config['gamma'], self.config['c']]))
 
-            # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
+                # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
 
-            # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
-            # tune.report(reward=reward)
-            rewards.append(reward)
-            # tune.report(reward=reward, episode_reward=sum(rewards))
+                # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
+                # tune.report(reward=reward)
+                rewards.append(reward)
+                # tune.report(reward=reward, episode_reward=sum(rewards))
 
-        return dict(episode_reward=sum(rewards))
+        return dict(episode_reward=sum(rewards)/self.config['epochs'])
 
     def reset_config(self, new_config):
         return True

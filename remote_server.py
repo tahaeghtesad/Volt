@@ -4,6 +4,7 @@ import sys
 import time
 from threading import Thread
 
+from envs.power.onetwentythree_bus import OneTwentyThreeBus
 from envs.power.thirteen_bus import ThirteenBus
 from envs.power.thirteen_bus_single_param import SingleParamThirteenBus
 from util.env_util import Historitized
@@ -30,7 +31,6 @@ class ServerThread(Thread):
         logger = logging.getLogger(__name__)
         logger.info(f'Starting MATLAB engine {i}...')
         engine = matlab.engine.start_matlab()
-        engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\matlab')
         logger.info(f'MATLAB engine {i} started in {time.time() - start:.2f} seconds.')
         return engine
 
@@ -44,7 +44,7 @@ class ServerThread(Thread):
         self.logger.info(f'Environment Config: {info["config"]}')
         assert info['event'] == 'start', 'Client Error.'
 
-        self.env = Historitized(ThirteenBus(self.engine_pool, info['config']), info['config']['history_size'])
+        self.env = Historitized(OneTwentyThreeBus(self.engine_pool, info['config']), info['config']['history_size'])
         self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=1, T=self.env.env.T))
 
         while not self.finished:

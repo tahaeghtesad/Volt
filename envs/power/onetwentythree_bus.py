@@ -13,7 +13,7 @@ import logging
 from util.reusable_pool import ReusablePool
 
 
-class ThirteenBus(gym.Env):
+class OneTwentyThreeBus(gym.Env):
     def __init__(self, engine_pool: ReusablePool, env_config):
         self.logger = logging.getLogger(__name__)
         self.matlab_running = True
@@ -22,15 +22,16 @@ class ThirteenBus(gym.Env):
         self.env_config = env_config
 
         self.engine = self.engine_pool.acquire()
-        self.engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\ieee13_all_control')
+        self.engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\ieee123_fixed_control')
 
         self.null_stream = io.StringIO()
-
         self.T = self.env_config['T']
-        # self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
-        # self.n = int(self.engine.workspace['n'])
-        self.n = 29
+        self.engine.eval('clc', nargout=0)
+        self.engine.workspace['T'] = int(1.5 * self.T + 1)
+        self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
+
+        self.n = int(self.engine.workspace['n'])
 
         self.step_number = 0
         self.episode = 0
@@ -46,6 +47,14 @@ class ThirteenBus(gym.Env):
         self.step_number = 0
 
         self.engine.workspace['T'] = int(1.5 * self.T + 1)
+
+        # TODO: set these in matlab engine
+        # delay_flag=0;
+        # control_flag=1;
+        # noise_flag=0;
+        #
+        # measurement_noise=0;
+        # delay=0;
 
         self.engine.eval('clc', nargout=0)
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
