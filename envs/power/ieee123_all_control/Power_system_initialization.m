@@ -1,12 +1,12 @@
 % OPTDIST VC for 13 bus system
 % Algorithm 1 Three Phase Model
 % Without capacitors and regulators
-clc;close all;
-
 
 
 % NETWORK
 % MODEL.............................................................................
+
+global T
 
 Topology_123_bus_reg
 
@@ -38,7 +38,6 @@ Data.q_bar = +1;% upper limit for q
 Data.q_un  = -1; % lower limit for q
 
  Data.load_var = 1; % 100% loading
- T=10000; % Number of iterations
 
  % Defining the simulation case
 simu_case = 'static';  % static or dynamic  or static_param(paramter sensitivity under static conditions)
@@ -161,3 +160,41 @@ G.Y_control=Y;
 
 % size of network
 n = size(Data.q_un_vec,1); % number of controllable nodes
+
+global var
+
+var.q_hat = zeros(n,T); % ''virtual'' reactive power
+var.xi = zeros(n,T); % lagrangian multiplier for reactive power constraint
+var.lambda_bar = zeros(n,T); % lagrangian multipler for voltage constraint (upper limit)
+var.lambda_un = zeros(n,T); % lagrangian multipler for voltage constraint (lower limit)
+var.v_c = zeros(n,T); % voltage
+var.v_c_phase = zeros(n,T); % voltage
+var.q = zeros(n,T); % ''actual'' reactive power
+var.f = zeros(1,T); % objective function value
+var.fes = zeros(1,T); % feasibility of solution
+
+global g_data control_flag delay delay_flag measurement_noise noise_flag power_loss_ratio load_var v_un v_bar q_un q_bar a b Y C U_c
+g_data = Data
+control_flag = 1
+delay = 0;
+delay_flag = 0
+measurement_noise = 0
+noise_flag = 0
+power_loss_ratio = Data.power_loss_weight
+load_var = Data.load_var
+
+v_un=Data.v_un_vec;
+v_bar=Data.v_bar_vec;
+q_un=Data.q_un_vec;
+q_bar=Data.q_bar_vec;
+a=Data.a;
+b=Data.b;
+Y=G.Y_control;
+
+% size of network
+U_c=G.U_c;
+% only for control nodes
+v_un=G.C*v_un;
+v_bar=G.C*v_bar;
+
+C=G.C;

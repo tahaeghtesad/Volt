@@ -22,7 +22,9 @@ class OneTwentyThreeBus(gym.Env):
         self.env_config = env_config
 
         self.engine = self.engine_pool.acquire()
-        self.engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\ieee123_fixed_control')
+        path = f'C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\ieee123_{env_config["mode"]}\\'
+        self.logger.info(f'Path: {path}')
+        self.engine.addpath(path)
 
         self.null_stream = io.StringIO()
         self.T = self.env_config['T']

@@ -1,6 +1,3 @@
-
-clc
-clear all
 Data.VBase = (4.16e3)/sqrt(3); % per phase base voltage (kV)
 Data.SBase = 1000e3;% Per phase base power = 1000kVA
 Data.ZBase =  Data.VBase^2/Data.SBase; % Ohms (per phase)

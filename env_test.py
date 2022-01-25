@@ -23,6 +23,7 @@ engine_pool = ReusablePool(1, ServerThread.init_matlab, ServerThread.clean_matla
 logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 env = OneTwentyThreeBus(engine_pool, env_config={
+    'mode': 'all_control',
     'search_range': 5,
     'voltage_threshold': 0.05,
     'T': 500,
@@ -46,8 +47,8 @@ if __name__ == '__main__':
                 c * np.ones(env.n),
             ))))
 
-            q_table[:, env.step_number - 1] = info['q'].reshape((24, ))
-            v_table[:, env.step_number - 1] = info['v'].reshape((24, ))
+            q_table[:, env.step_number - 1] = info['q'].reshape((env.n, ))
+            v_table[:, env.step_number - 1] = info['v'].reshape((env.n, ))
             rewards.append(reward)
 
         # plt.plot(q_table.T[1:-1, :])

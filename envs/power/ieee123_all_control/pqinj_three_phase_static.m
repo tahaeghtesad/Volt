@@ -7,7 +7,7 @@ function[V_phase_OPENDSS] = pqinj_three_phase_static(Data,load_var,q_inj)
 if DSSStartOK
 
 DSSObj.AllowForms = false;
-DSSText.Command = 'Set DataPath =C:\Users\Niloy\Dropbox\NILOY\LINA_MATLAB_CODES\Algorithm1_three_phase_extension\IEEE123BusFeeder';
+DSSText.Command = 'Set DataPath =C:\Users\teghtesa\PycharmProjects\Volt\envs\power\ieee123_all_control';
 DSSText.Command = 'Compile IEEE123Master.dss';   
  %lm=Data.load_var{t,2};
  lm=load_var;
