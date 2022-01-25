@@ -68,6 +68,7 @@ class VC(Trainable):
 
                 # print(f'Step: {step} - Obs: {obs} - Action: {action} - Reward: {reward}')
 
+
                 # obs, reward, done, info = env.step(10000 * np.random.random((4 * env.n,)) - 5000)
                 # tune.report(reward=reward)
                 rewards.append(reward)

@@ -1,29 +1,9 @@
 function optdist_vc_ML(params, t)
 
 	global v_un v_bar q_un q_bar a b power_loss_ratio Y measurement_noise delay  n delay_flag control_flag U_c C  T noise_flag load_var
-	global g_data g_G var
+	global g_data var
 
 	Data = g_data;
-	G = g_G;
-
-	v_un=Data.v_un_vec;
-	v_bar=Data.v_bar_vec;
-	q_un=Data.q_un_vec;
-	q_bar=Data.q_bar_vec;
-	a=Data.a;
-	b=Data.b;
-	power_loss_ratio=Data.power_loss_weight;
-	Y=G.Y_control;
-
-
-	% size of network
-	n = size(q_un,1); % number of controllable nodes
-	U_c=G.U_c;
-	% only for control nodes
-	v_un=G.C*v_un;
-	v_bar=G.C*v_bar;
-
-	C=G.C;
 
 	alpha = params.alpha;
 	beta = params.beta;

@@ -7,8 +7,9 @@
 % NETWORK
 % MODEL.............................................................................
 
-Topology_123_bus_reg
 global T
+
+Topology_123_bus_reg
 
 [D_P,D_Q,Ao,D_p_abc,D_q_abc,Data] = gen_ZP_ZQ(Data); % G.R_matrix =D_P , G.X_matrix=D_Q
 
@@ -173,8 +174,28 @@ var.q = zeros(n,T); % ''actual'' reactive power
 var.f = zeros(1,T); % objective function value
 var.fes = zeros(1,T); % feasibility of solution
 
-global g_data g_G control_flag delay
+global g_data control_flag delay delay_flag measurement_noise noise_flag power_loss_ratio load_var v_un v_bar q_un q_bar a b Y C U_c
 g_data = Data
-g_G = G
 control_flag = 1
-delay = 1;
+delay = 0;
+delay_flag = 0
+measurement_noise = 0
+noise_flag = 0
+power_loss_ratio = Data.power_loss_weight
+load_var = Data.load_var
+
+v_un=Data.v_un_vec;
+v_bar=Data.v_bar_vec;
+q_un=Data.q_un_vec;
+q_bar=Data.q_bar_vec;
+a=Data.a;
+b=Data.b;
+Y=G.Y_control;
+
+% size of network
+U_c=G.U_c;
+% only for control nodes
+v_un=G.C*v_un;
+v_bar=G.C*v_bar;
+
+C=G.C;
