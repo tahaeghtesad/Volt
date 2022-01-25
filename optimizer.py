@@ -10,6 +10,7 @@ from ray.tune.suggest.bayesopt import BayesOptSearch
 from envs.remote.client import RemoteEnv
 
 config = {
+    'mode': 'all_control',
     # 'index': 3,
     'voltage_threshold': 0.05,
 
@@ -92,7 +93,7 @@ class VC(Trainable):
 #     {'alpha': -2.6989700043360187, 'beta': 0.3590219426416679, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
 #     {'alpha': -2.6989700043360187, 'beta': 0.5528419686577808, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812}
 # ]
-points_to_evaluate = [dict(alpha=math.log10(0.001), beta=math.log10(5), gamma=math.log10(200), c=math.log10(1))]
+points_to_evaluate = [dict(alpha=math.log10(0.002), beta=math.log10(0.5), gamma=math.log10(100), c=math.log10(1))]
 
 # from the best of experiment state
 # points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_22-01-59.json', 24)
@@ -106,14 +107,14 @@ search_space = {
 }
 
 if __name__ == '__main__':
-    ray.init(num_cpus=4)
+    ray.init(num_cpus=8)
     analysis = tune.run(
         VC,
         config=config,
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
                                   points_to_evaluate=points_to_evaluate,
-                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=12),
+                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=36),
         # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
         # scheduler=FIFOScheduler(),
         stop={
