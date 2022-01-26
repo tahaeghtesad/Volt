@@ -129,9 +129,9 @@ if __name__ == '__main__':
             reuse_actors=True,
         )
 
-        with open('log.log', 'w') as fd:
-            fd.write(f'load_var: {config["load_var"]}')
-            fd.write(f'best_config: {analysis.get_best_config(metric="episode_reward", mode="max")}')
+        with open('log.log', 'a') as fd:
+            fd.write(f'load_var: {config["load_var"]}\n')
+            fd.write(f'best_config: {analysis.get_best_config(metric="episode_reward", mode="max")}\n')
 
         print(f'load_var: {config["load_var"]}')
         print("Best config: ", analysis.get_best_config(
