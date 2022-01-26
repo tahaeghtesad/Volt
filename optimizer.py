@@ -108,23 +108,31 @@ search_space = {
 
 if __name__ == '__main__':
     ray.init(num_cpus=8)
-    analysis = tune.run(
-        VC,
-        config=config,
-        name='hyperparameter_check_bo_full_range',
-        search_alg=BayesOptSearch(space=search_space,
-                                  points_to_evaluate=points_to_evaluate,
-                                  metric="episode_reward", mode="max", verbose=1, random_search_steps=36),
-        # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
-        # scheduler=FIFOScheduler(),
-        stop={
-            'training_iteration': 1,
-        },
-        num_samples=-1,
-        reuse_actors=True,
-    )
 
-    print("Best config: ", analysis.get_best_config(
-        metric="episode_reward", mode="max"))
+    for epoch in range(20):
 
-    print(analysis.results_df)
+        config['load_var'] = np.random.random() * 0.4 + 0.8
+        analysis = tune.run(
+            VC,
+            config=config,
+            name='hyperparameter_check_bo_full_range',
+            search_alg=BayesOptSearch(space=search_space,
+                                      points_to_evaluate=points_to_evaluate,
+                                      metric="episode_reward", mode="max", verbose=0, random_search_steps=4),
+            # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
+            # scheduler=FIFOScheduler(),
+            stop={
+                'training_iteration': 1,
+                'episode_reward': -2
+            },
+            num_samples=64,
+            reuse_actors=True,
+        )
+
+        with open('log.log', 'w') as fd:
+            fd.write(f'load_var: {config["load_var"]}')
+            fd.write(f'best_config: {analysis.get_best_config(metric="episode_reward", mode="max")}')
+
+        print(f'load_var: {config["load_var"]}')
+        print("Best config: ", analysis.get_best_config(
+            metric="episode_reward", mode="max"))
