@@ -6,6 +6,7 @@ from ray import tune
 from ray.tune import Trainable
 from ray.tune.schedulers import FIFOScheduler, AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
+from tqdm import tqdm
 
 from envs.remote.client import RemoteEnv
 
@@ -107,11 +108,12 @@ search_space = {
 }
 
 if __name__ == '__main__':
-    ray.init(num_cpus=8)
+    ray.init(num_cpus=6)
+    load_vars = np.linspace(0.8, 1.2, 20)
 
-    for epoch in range(20):
-
-        config['load_var'] = np.random.random() * 0.4 + 0.8
+    for load_var in tqdm(load_vars):
+        # config['load_var'] = np.random.random() * 0.4 + 0.8
+        config['load_var'] = load_var
         analysis = tune.run(
             VC,
             config=config,
@@ -125,7 +127,7 @@ if __name__ == '__main__':
                 'training_iteration': 1,
                 'episode_reward': -2
             },
-            num_samples=64,
+            num_samples=128,
             reuse_actors=True,
             verbose=0
         )
