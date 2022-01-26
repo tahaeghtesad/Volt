@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
     for load_var in tqdm(load_vars):
         # config['load_var'] = np.random.random() * 0.4 + 0.8
-        config['load_var'] = float(load_var)
+        config['load_var'] = load_var
         analysis = tune.run(
             VC,
             config=config,
@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
         with open('log.log', 'a') as fd:
             fd.write(f'load_var: {config["load_var"]}\n')
-            fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)))
+            fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['alpha', 'beta', 'gamma', 'c', 'episode_reward']]))
 
         print(f'load_var: {config["load_var"]}')
-        print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10))
+        print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['alpha', 'beta', 'gamma', 'c', 'episode_reward']])
