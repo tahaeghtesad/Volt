@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
         with open('log.log', 'a') as fd:
             fd.write(f'load_var: {config["load_var"]}\n')
-            fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['alpha', 'beta', 'gamma', 'c', 'episode_reward']]))
+            fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']]))
 
         print(f'load_var: {config["load_var"]}')
-        print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['alpha', 'beta', 'gamma', 'c', 'episode_reward']])
+        print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']])
