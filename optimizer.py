@@ -34,12 +34,12 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 20,
+    'T': 10,
 
     # Repeat
     'repeat': 1,
 
-    'epochs': 30
+    'epochs': 1
 }
 
 
@@ -127,12 +127,12 @@ if __name__ == '__main__':
             },
             num_samples=64,
             reuse_actors=True,
+            verbose=0
         )
 
         with open('log.log', 'a') as fd:
             fd.write(f'load_var: {config["load_var"]}\n')
-            fd.write(f'best_config: {analysis.get_best_config(metric="episode_reward", mode="max")}\n')
+            fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)))
 
         print(f'load_var: {config["load_var"]}')
-        print("Best config: ", analysis.get_best_config(
-            metric="episode_reward", mode="max"))
+        print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10))
