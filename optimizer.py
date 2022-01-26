@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
     for load_var in tqdm(load_vars):
         # config['load_var'] = np.random.random() * 0.4 + 0.8
-        config['load_var'] = load_var
+        config['load_var'] = float(load_var)
         analysis = tune.run(
             VC,
             config=config,
