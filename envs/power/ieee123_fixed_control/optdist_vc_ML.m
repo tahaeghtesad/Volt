@@ -57,7 +57,7 @@ function optdist_vc_ML(params, t)
 
     if control_flag==1
         %[V_phase_pu] = OPENDSS_interface_qinj_static(t,load_var,q_inj,Data);
-         [V_phase_pu] = pqinj_three_phase_static(Data,Data.load_var,q_inj);
+         [V_phase_pu] = pqinj_three_phase_static(Data,load_var,q_inj);
     end
 
     for h=1:length(V_phase_pu(:,1))

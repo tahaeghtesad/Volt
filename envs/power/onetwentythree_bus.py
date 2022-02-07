@@ -23,7 +23,7 @@ class OneTwentyThreeBus(gym.Env):
 
         self.engine = self.engine_pool.acquire()
         path = f'C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\ieee123_{env_config["mode"]}\\'
-        self.logger.info(f'Path: {path}')
+        self.logger.debug(f'Path: {path}')
         self.engine.addpath(path)
 
         self.null_stream = io.StringIO()
@@ -47,9 +47,6 @@ class OneTwentyThreeBus(gym.Env):
     def reset(self):
         self.episode += 1
         self.step_number = 0
-
-        self.engine.workspace['T'] = int(1.5 * self.T + 1)
-
         # TODO: set these in matlab engine
         # delay_flag=0;
         # control_flag=1;
@@ -59,6 +56,9 @@ class OneTwentyThreeBus(gym.Env):
         # delay=0;
 
         self.engine.eval('clc', nargout=0)
+        self.engine.workspace['T'] = int(1.5 * self.T + 1)
+        # self.engine.workspace['load_var'] = float(self.env_config['load_var'])
+        self.engine.workspace['load_var'] = float(np.random.random() * 0.4 + 0.8)
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         # obs, reward, done, info = self.step(np.repeat(np.array([self.env_config['defaults']['alpha'],
@@ -108,7 +108,7 @@ class OneTwentyThreeBus(gym.Env):
 
         done = self.step_number == self.T or all(self.converge_history)
         reward = 0 if converged else -1
-        reward -= loss
+        # reward -= loss
 
         # if done:
         #     print(f'Step: {self.step_number}')

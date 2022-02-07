@@ -182,7 +182,6 @@ delay_flag = 0
 measurement_noise = 0
 noise_flag = 0
 power_loss_ratio = Data.power_loss_weight
-load_var = Data.load_var
 
 v_un=Data.v_un_vec;
 v_bar=Data.v_bar_vec;

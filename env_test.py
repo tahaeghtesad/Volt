@@ -14,10 +14,15 @@ from envs.power.onetwentythree_bus import OneTwentyThreeBus
 from remote_server import ServerThread
 from util.reusable_pool import ReusablePool
 
-alpha = 0.002
-beta = 0.5
-gamma = 100
-c = 1
+# alpha = 0.002
+# beta = 0.5
+# gamma = 100
+# c = 1
+
+alpha = 10 ** -4.069457373049808
+beta = 10 ** 3.9795074542061593
+gamma = 10 ** 3.507641819850809
+c = 10 ** 1.0328233759129137
 
 engine_pool = ReusablePool(1, ServerThread.init_matlab, ServerThread.clean_matlab)
 logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -26,12 +31,14 @@ env = OneTwentyThreeBus(engine_pool, env_config={
     'mode': 'all_control',
     'search_range': 5,
     'voltage_threshold': 0.05,
-    'T': 500,
+    'T': 10,
     'repeat': 1
 })
 
+rs = []
+
 if __name__ == '__main__':
-    for epoch in range(3):
+    for epoch in tqdm(range(128)):
 
         q_table = np.zeros((env.n, env.T))
         v_table = np.zeros((env.n, env.T))
@@ -59,3 +66,7 @@ if __name__ == '__main__':
 
         # plt.plot(rewards[:-1])
         # plt.show()
+        # print(sum(rewards))
+        rs.append(sum(rewards))
+
+    print(sum(rs)/len(rs))
