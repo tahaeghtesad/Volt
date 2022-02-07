@@ -39,8 +39,7 @@ class ThirteenBus(gym.Env):
                                            np.log10(np.repeat(np.array([1e-10, 1e3, 1e10, 1e4]), self.n)))
         self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
 
-        self.converge_history = []
-        self.last_f = 0
+        self.f_history = []
 
     def reset(self):
         self.episode += 1
@@ -56,8 +55,7 @@ class ThirteenBus(gym.Env):
         #                                               self.env_config['defaults']['gamma'],
         #                                               self.env_config['defaults']['c']]), self.n))
 
-        self.converge_history = []
-        self.last_f = 0
+        self.f_history = []
 
         return np.zeros((self.n, 1))
 
@@ -84,15 +82,15 @@ class ThirteenBus(gym.Env):
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
 
-        converged = np.abs(f[0] - self.last_f) < 1e-7
-        self.last_f = f[0]
+        self.f_history.append(f[0])
 
-        self.converge_history.append(converged)
-        if len(self.converge_history) > 4:
-            del self.converge_history[0]
+        if len(self.f_history) > 60:
+            del self.f_history[0]
 
-        done = self.step_number == self.T or all(self.converge_history)
-        reward = 0 if converged else -1
+        # print(f'{self.step_number:03d} - {np.std(self.f_history):.3f}')
+
+        done = self.step_number == self.T or (self.step_number > 20 and np.std(self.f_history) < 0.2)
+        reward = 0 if done else -1
 
         # if done:
         #     print(f'Step: {self.step_number}')

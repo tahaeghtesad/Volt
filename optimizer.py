@@ -35,7 +35,7 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 1000,
+    'T': 3000,
 
     # Repeat
     'repeat': 20,
@@ -53,10 +53,11 @@ class VC(Trainable):
     def step(self):
         rewards = []
 
-        done = False
         for epoch in range(self.config['epochs']):
             obs = self.env.reset()
-            for step in range(self.config['T'] // self.config['repeat']):
+            done = False
+            # for step in range(self.config['T'] // self.config['repeat']):
+            while not done:
                 # action = np.array([0, 0, 0, 0])
                 # action = env.action_space.low
                 # np.concatenate((
