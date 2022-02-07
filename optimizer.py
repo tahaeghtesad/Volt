@@ -13,7 +13,7 @@ from envs.remote.client import RemoteEnv
 config = {
     'mode': 'all_control',
     # 'index': 3,
-    'voltage_threshold': 0.05,
+    # 'voltage_threshold': 0.05,
 
     # Default hyper parameters for nodes not trained.
     'defaults': {
@@ -35,10 +35,10 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 10,
+    'T': 1000,
 
     # Repeat
-    'repeat': 1,
+    'repeat': 20,
 
     'epochs': 1
 }
@@ -127,7 +127,7 @@ if __name__ == '__main__':
                 'training_iteration': 1,
                 'episode_reward': -2
             },
-            num_samples=128,
+            num_samples=512,
             reuse_actors=True,
             verbose=0
         )

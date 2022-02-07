@@ -40,6 +40,7 @@ class ThirteenBus(gym.Env):
         self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
 
         self.converge_history = []
+        self.last_f = 0
 
     def reset(self):
         self.episode += 1
@@ -56,6 +57,7 @@ class ThirteenBus(gym.Env):
         #                                               self.env_config['defaults']['c']]), self.n))
 
         self.converge_history = []
+        self.last_f = 0
 
         return np.zeros((self.n, 1))
 
@@ -82,14 +84,8 @@ class ThirteenBus(gym.Env):
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
 
-        converged = True
-
-        loss = 0
-        for i in range(self.n):
-            phase_loss = math.pow(max(0, math.fabs(v[i] - 1) - self.env_config['voltage_threshold']), 2)
-            if phase_loss > 0:
-                converged = False
-            loss += phase_loss
+        converged = np.abs(f[0] - self.last_f) < 1e-7
+        self.last_f = f[0]
 
         self.converge_history.append(converged)
         if len(self.converge_history) > 4:
@@ -97,7 +93,6 @@ class ThirteenBus(gym.Env):
 
         done = self.step_number == self.T or all(self.converge_history)
         reward = 0 if converged else -1
-        reward -= loss
 
         # if done:
         #     print(f'Step: {self.step_number}')
