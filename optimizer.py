@@ -56,7 +56,7 @@ class VC(Trainable):
         done = False
         for epoch in range(self.config['epochs']):
             obs = self.env.reset()
-            for step in range(self.config['T']):
+            for step in range(self.config['T'] // self.config['repeat']):
                 # action = np.array([0, 0, 0, 0])
                 # action = env.action_space.low
                 # np.concatenate((
