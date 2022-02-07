@@ -109,32 +109,24 @@ search_space = {
 
 if __name__ == '__main__':
     ray.init(num_cpus=6)
-    load_vars = np.linspace(0.8, 1.2, 20)
+    analysis = tune.run(
+        VC,
+        config=config,
+        name='hyperparameter_check_bo_full_range',
+        search_alg=BayesOptSearch(space=search_space,
+                                  points_to_evaluate=points_to_evaluate,
+                                  metric="episode_reward", mode="max", verbose=0, random_search_steps=4),
+        # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
+        # scheduler=FIFOScheduler(),
+        stop={
+            'training_iteration': 1,
+        },
+        num_samples=512,
+        reuse_actors=True,
+        verbose=0
+    )
 
-    for load_var in tqdm(load_vars):
-        # config['load_var'] = np.random.random() * 0.4 + 0.8
-        config['load_var'] = load_var
-        analysis = tune.run(
-            VC,
-            config=config,
-            name='hyperparameter_check_bo_full_range',
-            search_alg=BayesOptSearch(space=search_space,
-                                      points_to_evaluate=points_to_evaluate,
-                                      metric="episode_reward", mode="max", verbose=0, random_search_steps=4),
-            # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
-            # scheduler=FIFOScheduler(),
-            stop={
-                'training_iteration': 1,
-                'episode_reward': -2
-            },
-            num_samples=512,
-            reuse_actors=True,
-            verbose=0
-        )
+    with open('log.log', 'a') as fd:
+        fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']]))
 
-        with open('log.log', 'a') as fd:
-            fd.write(f'load_var: {config["load_var"]}\n')
-            fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']]))
-
-        print(f'load_var: {config["load_var"]}')
-        print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']])
+    print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']])
