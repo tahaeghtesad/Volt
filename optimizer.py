@@ -111,7 +111,7 @@ if __name__ == '__main__':
         },
         num_samples=512,
         reuse_actors=True,
-        verbose=2
+        # verbose=1
     )
 
     pd.set_option("display.precision", 16)
