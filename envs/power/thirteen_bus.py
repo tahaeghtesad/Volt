@@ -9,6 +9,7 @@ import matlab.engine
 import numpy as np
 
 import logging
+from scipy.stats import linregress
 
 from util.reusable_pool import ReusablePool
 
@@ -39,7 +40,8 @@ class ThirteenBus(gym.Env):
                                            np.log10(np.repeat(np.array([1e-10, 1e3, 1e10, 1e4]), self.n)))
         self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
 
-        self.f_history = []
+        self.q_history = [[] for _ in range(self.n)]
+        self.converged_history = []
 
     def reset(self):
         self.episode += 1
@@ -55,7 +57,8 @@ class ThirteenBus(gym.Env):
         #                                               self.env_config['defaults']['gamma'],
         #                                               self.env_config['defaults']['c']]), self.n))
 
-        self.f_history = []
+        self.q_history = [[] for _ in range(self.n)]
+        self.converged_history = []
 
         return np.zeros((self.n, 1))
 
@@ -82,15 +85,23 @@ class ThirteenBus(gym.Env):
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
 
-        self.f_history.append(f[0])
+        for c in range(self.n):
+            self.q_history[c].append(q[c][0])
+            if len(self.q_history[c]) > 30:
+                del self.q_history[c][0]
 
-        if len(self.f_history) > 60:
-            del self.f_history[0]
+        voltages_converged = all(np.abs(v - 1) < self.env_config['voltage_threshold'] * 1.05)
+        q_slopes_converged = len(self.q_history[0]) > 1 and np.max([np.abs(linregress(np.arange(len(self.q_history[c])), self.q_history[c])[0]) for c in range(self.n)]) < 5e-5
 
-        # print(f'{self.step_number:03d} - {np.std(self.f_history):.3f}')
+        converged = voltages_converged and q_slopes_converged
+        # print(str(self.step_number) + '\t' + str(converged) + '\t' + str(np.max([np.abs(linregress(np.arange(len(self.q_history[c])), self.q_history[c])[0]) for c in range(self.n)])))
 
-        done = self.step_number == self.T or (self.step_number > 20 and np.std(self.f_history) < 0.2)
-        reward = 0 if done else -1
+        self.converged_history.append(converged)
+        if len(self.converged_history) > 10:
+            del self.converged_history[0]
+
+        done = self.step_number == self.T // self.env_config['repeat'] or (all(self.converged_history) and len(self.converged_history) == 10)
+        reward = 0 if converged else -1
 
         # if done:
         #     print(f'Step: {self.step_number}')

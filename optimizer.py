@@ -12,21 +12,7 @@ from envs.remote.client import RemoteEnv
 
 config = {
     'mode': 'all_control',
-    # 'index': 3,
-    # 'voltage_threshold': 0.05,
-
-    # Default hyper parameters for nodes not trained.
-    'defaults': {
-        'alpha': 0.001,
-        'beta': 5.0,
-        'gamma': 200.0,
-        'c': 1,
-    },
-
-    # 'alpha': tune.grid_search(np.log10(np.linspace(0.0005, 0.002, 15)).tolist()),
-    # 'beta': tune.grid_search(np.log10(np.linspace(1, 10, 15)).tolist()),
-    # 'gamma': tune.grid_search(np.log10(np.linspace(150, 250, 15)).tolist()),
-    # 'c': tune.grid_search(np.log10(np.linspace(0.5, 10, 15)).tolist()),
+    'voltage_threshold': 0.05,
 
     # Search range around the default parameters
     'search_range': 5,
@@ -35,10 +21,10 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 3000,
+    'T': 1000,
 
     # Repeat
-    'repeat': 20,
+    'repeat': 1,
 
     'epochs': 1
 }
@@ -124,7 +110,7 @@ if __name__ == '__main__':
         },
         num_samples=512,
         reuse_actors=True,
-        verbose=0
+        verbose=2
     )
 
     with open('log.log', 'a') as fd:
