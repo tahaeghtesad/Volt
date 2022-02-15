@@ -7,6 +7,7 @@ from ray.tune import Trainable
 from ray.tune.schedulers import FIFOScheduler, AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
 from tqdm import tqdm
+import pandas as pd
 
 from envs.remote.client import RemoteEnv
 
@@ -113,6 +114,7 @@ if __name__ == '__main__':
         verbose=2
     )
 
+    pd.set_option("display.precision", 16)
     with open('log.log', 'a') as fd:
         fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']]))
 
