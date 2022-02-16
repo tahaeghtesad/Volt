@@ -6,6 +6,7 @@ from ray import tune
 from ray.tune import Trainable
 from ray.tune.schedulers import FIFOScheduler, AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
+from ray.tune.utils.log import Verbosity
 from tqdm import tqdm
 import pandas as pd
 
@@ -22,12 +23,14 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 1000,
+    'T': 5000,
 
     # Repeat
-    'repeat': 1,
+    'repeat': 20,
 
-    'epochs': 1
+    'epochs': 1,
+
+    'window_size': 100,
 }
 
 
@@ -97,6 +100,7 @@ search_space = {
 
 if __name__ == '__main__':
     ray.init(num_cpus=6)
+    pd.set_option("display.precision", 16)
     analysis = tune.run(
         VC,
         config=config,
@@ -111,10 +115,9 @@ if __name__ == '__main__':
         },
         num_samples=512,
         reuse_actors=True,
-        # verbose=1
+        verbose=Verbosity.V3_TRIAL_DETAILS
     )
 
-    pd.set_option("display.precision", 16)
     with open('log.log', 'a') as fd:
         fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']]))
 
