@@ -17,20 +17,20 @@ config = {
     'voltage_threshold': 0.05,
 
     # Search range around the default parameters
-    'search_range': 5,
+    'search_range': 3,
 
     # Length of history
     'history_size': 1,
 
     # Episode length
-    'T': 2000,
+    'T': 2500,
 
     # Repeat
     'repeat': 1,
 
     'epochs': 1,
 
-    'window_size': 2000,
+    'window_size': 150,
 }
 
 
@@ -85,7 +85,8 @@ class VC(Trainable):
 #     {'alpha': -2.6989700043360187, 'beta': 0.3590219426416679, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
 #     {'alpha': -2.6989700043360187, 'beta': 0.5528419686577808, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812}
 # ]
-points_to_evaluate = [dict(alpha=math.log10(0.002), beta=math.log10(0.5), gamma=math.log10(100), c=math.log10(1))]
+points_to_evaluate = [dict(alpha=math.log10(0.002), beta=math.log10(0.5), gamma=math.log10(100), c=math.log10(1)),
+                      dict(alpha=-1.8364731991542713, beta=0.1779756936264951, gamma=1.5929615253821736, c=0.1865771965876492)]
 
 # from the best of experiment state
 # points_to_evaluate = read_experiment_state('/home/teghtesa/ray_results/hyperparameter_check_bo/experiment_state-2021-08-04_22-01-59.json', 24)
