@@ -23,14 +23,14 @@ config = {
     'history_size': 1,
 
     # Episode length
-    'T': 5000,
+    'T': 2000,
 
     # Repeat
-    'repeat': 20,
+    'repeat': 1,
 
     'epochs': 1,
 
-    'window_size': 100,
+    'window_size': 2000,
 }
 
 
