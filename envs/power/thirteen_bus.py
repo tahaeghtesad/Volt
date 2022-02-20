@@ -87,12 +87,13 @@ class ThirteenBus(gym.Env):
 
         for c in range(self.n):
             self.q_history[c].append(q[c][0])
-            if len(self.q_history[c]) > 30:
+            if len(self.q_history[c]) > self.env_config['window_size']:
                 del self.q_history[c][0]
 
         voltages_converged = all(np.abs(v - 1) < self.env_config['voltage_threshold'] * 1.05)
-        q_slopes_converged = len(self.q_history[0]) > 1 and np.max([np.abs(linregress(np.arange(len(self.q_history[c])), self.q_history[c])[0]) for c in range(self.n)]) < 5e-5
+        max_q_slope = np.max([np.abs(linregress(np.arange(len(self.q_history[c])), self.q_history[c])[0]) for c in range(self.n)]) if len(self.q_history[0]) > 1 else np.nan
 
+        q_slopes_converged = len(self.q_history[0]) > 1 and max_q_slope < 5e-5
         converged = voltages_converged and q_slopes_converged
         # print(str(self.step_number) + '\t' + str(converged) + '\t' + str(np.max([np.abs(linregress(np.arange(len(self.q_history[c])), self.q_history[c])[0]) for c in range(self.n)])))
 
@@ -108,7 +109,7 @@ class ThirteenBus(gym.Env):
 
         # print(f'Step: {self.step_number} - q_norm: {q_norm} - fes: {fes} - reward: {reward}')
 
-        return obs, reward, done, {'v': v, 'q': q, 'fes': fes[0], 'f': f[0]}
+        return obs, reward, done, {'v': v, 'q': q, 'fes': fes[0], 'f': f[0], 'max_q_slope': max_q_slope}
 
     def render(self, mode='human'):
         raise NotImplementedError()
