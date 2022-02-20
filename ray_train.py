@@ -30,7 +30,7 @@ config.update({
         'history_size': 1,
 
         # Episode length
-        'T': 3000,
+        'T': 2500,
         'repeat': 1,
         'window_size': 150,
     },
