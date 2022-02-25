@@ -30,9 +30,11 @@ config.update({
         'history_size': 1,
 
         # Episode length
-        'T': 2500,
-        'repeat': 1,
-        'window_size': 150,
+        'T': 400,
+        'repeat': 10,
+        'window_size': 10,
+
+        'q_slope_threshold': 1e-2,
     },
 
     # "lr": 5e-5,
@@ -40,6 +42,8 @@ config.update({
     # Clip param for the value function. Note that this is sensitive to the
     # scale of the rewards. If your expected V is large, increase this.
     # "vf_clip_param": 400.0,
+
+    "gamma": 0.9,
 
     "num_workers": 6,
 
