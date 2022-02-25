@@ -24,7 +24,7 @@ config.update({
         'voltage_threshold': 0.05,
 
         # Search range around the default parameters
-        'search_range': 4,
+        'search_range': 3,
 
         # Length of history
         'history_size': 1,
@@ -55,7 +55,7 @@ config.update({
 
 if __name__ == '__main__':
     try:
-        ray.init(num_cpus=config['num_workers'] * config['num_gpus'])
+        ray.init(num_cpus=config['num_workers'])
         result = tune.run(
             ppo.PPOTrainer,
             stop={
