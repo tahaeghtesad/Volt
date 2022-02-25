@@ -55,6 +55,7 @@ config.update({
 
 if __name__ == '__main__':
     try:
+        ray.init(num_cpus=config['num_workers'] * config['num_gpus'])
         result = tune.run(
             ppo.PPOTrainer,
             stop={
