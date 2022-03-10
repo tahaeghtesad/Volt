@@ -30,6 +30,7 @@ from util.reusable_pool import ReusablePool
 # alpha, beta, gamma, c = (-1., 3.041845, 1.963370, 0.488047)
 # alpha, beta, gamma, c =  (-4.7603732969850086, -5.0000000000000000,  3.1174591404670213,  1.5842818460532611)
 alpha, beta, gamma, c = (-1.6145001260743783, 1.1579715364588790, 1.4101386575517729, -1.730091534553142)
+# alpha, beta, gamma, c = (1e-2, 1e0, 1e1, 1e-2)
 
 engine_pool = ReusablePool(1, ServerThread.init_matlab, ServerThread.clean_matlab)
 logging.basicConfig(stream=sys.stdout,
@@ -38,11 +39,12 @@ logging.basicConfig(stream=sys.stdout,
 
 env = ThirteenBus(engine_pool, env_config={
     'mode': 'all_control',
-    'search_range': 4,
+    'search_range': 2,
     'voltage_threshold': 0.05,
-    'T': 500,
-    'repeat': 1,
-    'window_size': 150,
+    'T': 3500,
+    'repeat': 10,
+    'window_size': 10,
+    'change_threshold': 0.8,
 })
 
 rs = []
@@ -52,13 +54,20 @@ if __name__ == '__main__':
 
         q_table = np.zeros((env.n, env.T // env.env_config['repeat']))
         v_table = np.zeros((env.n, env.T // env.env_config['repeat']))
+        v_c_table = np.zeros((env.n, env.T // env.env_config['repeat']))
+        lambda_bar_table = np.zeros((env.n, env.T // env.env_config['repeat']))
+        lambda_un_table = np.zeros((env.n, env.T // env.env_config['repeat']))
+        xi_table = np.zeros((env.n, env.T // env.env_config['repeat']))
+        q_hat_table = np.zeros((env.n, env.T // env.env_config['repeat']))
+
 
         obs = env.reset()
         done = False
         rewards = []
         fs = []
-        mqs = []
+        cs = []
         fes = []
+        vd = []
         for step in tqdm(range(env.T // env.env_config['repeat'])):
             obs, reward, done, info = env.step(np.concatenate((
                 alpha * np.ones(env.n),
@@ -69,12 +78,21 @@ if __name__ == '__main__':
 
             q_table[:, env.step_number - 1] = info['q'].reshape((env.n,))
             v_table[:, env.step_number - 1] = info['v'].reshape((env.n,))
+            v_c_table[:, env.step_number - 1] = info['v_c'].reshape((env.n,))
+            lambda_bar_table[:, env.step_number - 1] = info['lambda_bar'].reshape((env.n,))
+            lambda_un_table[:, env.step_number - 1] = info['lambda_un'].reshape((env.n,))
+            xi_table[:, env.step_number - 1] = info['xi'].reshape((env.n,))
+            q_hat_table[:, env.step_number - 1] = info['q_hat'].reshape((env.n,))
+
             rewards.append(reward)
             fs.append(info['f'])
-            if not np.isnan(info['max_q_slope']):
-                mqs.append(info['max_q_slope'])
+            cs.append(info['changes'])
+            vd.append(info['voltage_deviations'])
 
             fes.append(info['fes'])
+
+            if done:
+                break
 
         plt.title('q')
         plt.plot(q_table.T[1:-1, :])
@@ -87,24 +105,48 @@ if __name__ == '__main__':
         plt.show()
 
         plt.title('r')
-        plt.plot(rewards[:-1])
+        plt.plot(rewards[:-1], '-o', label='reward')
+        plt.plot(-np.array(cs[:-1]), '-', label='changes')
+        plt.plot(-np.array(vd[:-1]), '-', label='voltage_deviations')
+        plt.plot(0.1 * np.ones(len(vd)), '-', label='0.1')
+        plt.legend()
         plt.savefig('r.png')
         plt.show()
 
-        plt.title('f')
-        plt.plot(fs[:-1])
-        plt.savefig('f.png')
-        plt.show()
+        # plt.title('f')
+        # plt.plot(fs[:-1])
+        # plt.savefig('f.png')
+        # plt.show()
 
-        plt.title('fes')
-        plt.plot(fes[:-1])
-        plt.savefig('fes.png')
-        plt.show()
+        # plt.title('fes')
+        # plt.plot(fes[:-1])
+        # plt.savefig('fes.png')
+        # plt.show()
 
-        plt.title('max-slope')
-        plt.plot(np.log10(mqs[:-1]))
-        plt.savefig('max-slope.png')
-        plt.show()
+        # plt.title('q_hat')
+        # plt.plot(q_hat_table.T[1:-1, :])
+        # plt.savefig('q_hat.png')
+        # plt.show()
+        #
+        # plt.title('lambda_bar')
+        # plt.plot(lambda_bar_table.T[1:-1, :])
+        # plt.savefig('lambda_bar.png')
+        # plt.show()
+        #
+        # plt.title('lambda_un')
+        # plt.plot(np.clip(lambda_un_table.T[1:-1, :], None, 2))
+        # plt.savefig('lambda_un.png')
+        # plt.show()
+        #
+        # plt.title('xi')
+        # plt.plot(xi_table.T[1:-1, :])
+        # plt.savefig('xi.png')
+        # plt.show()
+        #
+        # plt.title('v_c')
+        # plt.plot(v_c_table.T[1:-1, :])
+        # plt.savefig('v_c.png')
+        # plt.show()
 
         print(sum(rewards))
         rs.append(sum(rewards))

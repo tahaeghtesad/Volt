@@ -36,8 +36,13 @@ class ThirteenBus(gym.Env):
         self.step_number = 0
         self.episode = 0
 
-        self.action_space = gym.spaces.Box(np.log10(np.repeat(np.array([1e2, 1e-3, 1e-1, 1e-1]), self.n)),
-                                           np.log10(np.repeat(np.array([1e-10, 1e3, 1e10, 1e4]), self.n)))
+        # self.action_space = gym.spaces.Box(np.log10(np.repeat(np.array([1e2, 1e-3, 1e-1, 1e-1]), self.n)),
+        #                                    np.log10(np.repeat(np.array([1e-10, 1e3, 1e10, 1e4]), self.n)))
+
+        self.action_space = gym.spaces.Box(low=-self.env_config['search_range'],
+                                           high=self.env_config['search_range'],
+                                           shape=(self.n * 4,))
+
         self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
 
         self.q_history = [[] for _ in range(self.n)]
@@ -74,42 +79,91 @@ class ThirteenBus(gym.Env):
                                    self.step_number, stdout=self.null_stream)
         except Exception as e:
             self.logger.error(f'Step: {self.step_number}')
+            self.logger.error(f'Action Value: {action}')
             raise e
 
-        v = np.array(var['v'], dtype=np.float)
-        q = np.array(var['q'], dtype=np.float)
-        fes = np.array([var['fes']], dtype=np.float)
-        f = np.array([var['f']], dtype=np.float)
+        info = dict(
+            v=np.array(var['v'], dtype=np.float),
+            q=np.array(var['q'], dtype=np.float),
+            fes=np.array([var['fes']], dtype=np.float),
+            f=np.array([var['f']], dtype=np.float),
+            v_c=np.array(var['v_c'], dtype=np.float),
+            lambda_bar=np.array(var['lambda_bar'], dtype=np.float),
+            lambda_un=np.array(var['lambda_un'], dtype=np.float),
+            xi=np.array(var['xi'], dtype=np.float),
+            q_hat=np.array(var['q_hat'], dtype=np.float),
+        )
 
-        obs = v.flatten()
+        obs = info['v'].flatten()
         # q_norm = np.linalg.norm(q)
         # reward = -q_norm - fes[0]
 
         for c in range(self.n):
-            self.q_history[c].append(q[c][0])
+            self.q_history[c].append(info['q'][c][0])
             if len(self.q_history[c]) > self.env_config['window_size']:
                 del self.q_history[c][0]
 
-        voltages_converged = all(np.abs(v - 1) < self.env_config['voltage_threshold'] * 1.05)
-        max_q_slope = np.max([np.abs(linregress(np.arange(len(self.q_history[c])), self.q_history[c])[0]) for c in range(self.n)]) if len(self.q_history[0]) > 1 else np.nan
+        voltages_converged = np.all(np.abs(info['v'] - 1) < self.env_config['voltage_threshold'] * 1.1)
+        voltage_deviations = np.sum(np.clip(np.abs(info['v'] - 1) - self.env_config['voltage_threshold'], 0, None))
+        changes = np.mean([np.mean(np.clip(
+            np.abs(self.q_history[c][-1] - np.array(self.q_history[c])) / self.q_history[c][-1] - self.env_config[
+                'change_threshold'], 0, None)) for c in range(self.n)])
 
-        q_slopes_converged = len(self.q_history[0]) > 1 and max_q_slope < 5e-5
-        converged = voltages_converged and q_slopes_converged
-        # print(str(self.step_number) + '\t' + str(converged) + '\t' + str(np.max([np.abs(linregress(np.arange(len(self.q_history[c])), self.q_history[c])[0]) for c in range(self.n)])))
+        changes_converged = \
+            len(self.q_history[0]) >= self.env_config['window_size'] and \
+            all([np.all(
+                np.abs(self.q_history[c][-1] - np.array(self.q_history[c])) / self.q_history[c][-1] < self.env_config[
+                    'change_threshold'] * 1.05) for c in range(self.n)])
+
+        converged = voltages_converged and changes_converged
+
+        info['changes'] = changes
+        info['voltage_deviations'] = voltage_deviations
 
         self.converged_history.append(converged)
         if len(self.converged_history) > 10:
             del self.converged_history[0]
 
-        done = self.step_number == self.T // self.env_config['repeat'] or (all(self.converged_history) and len(self.converged_history) == 10)
-        reward = 0 if converged else -1
+        done = self.step_number == self.T // self.env_config['repeat'] or (
+                    all(self.converged_history) and len(self.converged_history) == 10) or (
+                self.env_config['reward_mode'] == 'continuous' and not voltages_converged and self.step_number * self.env_config['repeat'] >= 20)
+
+        reward = -1 # This is not required!
+
+        if self.env_config['reward_mode'] == 'continuous':
+            reward = 0
+            if voltages_converged:
+                reward += 1
+            else:
+                reward -= 5.0 * voltage_deviations
+
+            if changes_converged:
+                reward += 1
+            else:
+                reward -= 1.0 * changes
+
+            if all(self.converged_history) and len(self.converged_history) == 10:
+                reward += 100
+
+            reward *= 0.1
+
+        elif self.env_config['reward_mode'] == 'steps':
+            if all(self.converged_history) and len(self.converged_history) == 10:
+                reward = 0
+            else:
+                reward = -1
+
+
+        # reward = -1 if not voltages_converged else 0
+
+        # reward = 0 if converged else -1 - 0.5 * voltage_deviations - 0.01 * changes
 
         # if done:
         #     print(f'Step: {self.step_number}')
 
         # print(f'Step: {self.step_number} - q_norm: {q_norm} - fes: {fes} - reward: {reward}')
 
-        return obs, reward, done, {'v': v, 'q': q, 'fes': fes[0], 'f': f[0], 'max_q_slope': max_q_slope}
+        return obs, reward, done, info
 
     def render(self, mode='human'):
         raise NotImplementedError()

@@ -14,11 +14,12 @@ function state = step(alpha, beta, gamma, c, repeat, t)
     state.q = var.q(:, repeat * t);
     state.fes = var.fes(repeat * t);
     state.f = var.f(repeat * t);
-    %state = data;
 
-%    disp(alpha)
-%    disp(beta)
-%    disp(gamma)
-%    disp(c)
-%    disp(state)
+    state.v_c = var.v_c(:, repeat * t);
+    state.lambda_bar = var.lambda_bar(:, repeat * t + 1);
+    state.lambda_un = var.lambda_un(:, repeat * t + 1);
+    state.xi = var.xi(:, repeat * t + 1);
+    state.q_hat = var.q_hat(:, repeat * t);
+
+
 end

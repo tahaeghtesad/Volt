@@ -27,28 +27,26 @@ config.update({
 
     'env': 'volt',
     'env_config': {
-        # Index of trained node -> [0, env.n]
-        # 'index': 0,
+
+        'mode': 'all_control',
+
         'voltage_threshold': 0.05,
         # 'power_injection_cost': 0.2,
 
-        # Default hyper parameters for nodes not trained.
-        'defaults': {
-            'alpha': 0.001,
-            'beta': 5.0,
-            'gamma': 200.0,
-            'c': 1,
-        },
-
         # Search range around the default parameters
-        'search_range': 5,
+        'search_range': 3,
 
         # Length of history
         'history_size': 1,
 
         # Episode length
-        'T': 15,
-        'repeat': 1,
+        'T': 3500,
+
+        'repeat': 10,
+
+        'window_size': 10,
+
+        'change_threshold': 0.2,
     },
 
     # "lr": 5e-5,
@@ -73,13 +71,13 @@ config.update({
 
 
 def load_trainer(remote_path):
-    destination = os.environ['TMPDIR'] + 'checkpoint' + f'{random.randint(1, 10000):06d}'
-    print(f'Copying checkpoint file from {remote_path} to {destination}')
-    os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path} {destination}')
-    os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path}.tune_metadata {destination}.tune_metadata')
+    # destination = '/tmp/' + 'checkpoint' + f'{random.randint(1, 10000):06d}'
+    # print(f'Copying checkpoint file from {remote_path} to {destination}')
+    # os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path} {destination}')
+    # os.system(f'scp teghtesa@rnslab2.hpcc.uh.edu:{remote_path}.tune_metadata {destination}.tune_metadata')
     print(f'Restoring trainer.')
     trainer = ppo.PPOTrainer(config=config, env=None)
-    trainer.restore(destination)
+    trainer.restore(remote_path)
     return trainer
 
 
@@ -89,9 +87,10 @@ register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
 def eval_trainer(checkpoint):
     env = RemoteEnv('localhost', 6985, config=config['env_config'])
     trainer = load_trainer(
-        f'~/ray_results/'
-        f'PPO_2021-11-18_16-46-03/PPO_volt_4ee23_00000_0_2021-11-18_16-46-03'
-        f'/checkpoint_000{checkpoint:03d}/checkpoint-{checkpoint}')
+        f'/home/teghtesa/ray_results/'
+        # f'PPO_2022-03-08_17-47-41/PPO_volt_24e5a_00000_0_2022-03-08_17-47-41'
+        f'PPO_2022-03-10_11-41-05/PPO_volt_4320a_00000_0_2022-03-10_11-41-06'
+        f'/checkpoint_{checkpoint:06d}/checkpoint-{checkpoint}')
 
     values = {
         'alpha': [],
@@ -100,19 +99,27 @@ def eval_trainer(checkpoint):
         'c': [],
         'reward': []
     }
+    q_table = np.zeros((env.n, env.T // config['env_config']['repeat']))
+    v_table = np.ones((env.n, env.T // config['env_config']['repeat']))
 
-    for i in tqdm(range(1)):
+    fs = []
+    cs = []
+    vd = []
+
+    for i in range(1):
         step = 0
         done = False
         obs = env.reset()
         action = np.zeros(4)
         reward = 0
+        pbar = tqdm(total=config['env_config']['T']/config['env_config']['repeat'])
 
+        # for step in range(env.T // config['env_config']['repeat']):
         while not done:
             # if step < 4:
             #     action = np.log10(np.array(list(config['env_config']['defaults'].values())))
             # else:
-            action = trainer.compute_single_action(obs, unsquash_action=True, explore=False)
+            action = trainer.compute_single_action(obs, unsquash_action=True, clip_action=False, explore=True)
             # action_info = trainer.get_policy().compute_single_action(obs, prev_action=action, prev_reward=reward, explore=False)
             # action = action_info[0]
             # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
@@ -128,12 +135,19 @@ def eval_trainer(checkpoint):
             obs, reward, done, info = env.step(action)
             # print(f'obs: {obs}')
             # print(f'reward: {reward}')
-            print(f'action: {action}')
+            q_table[:, env.step_number - 1] = info['q'].reshape((env.n,))
+            v_table[:, env.step_number - 1] = info['v'].reshape((env.n,))
+            # print(f'action: {action}')
 
             values['reward'].append(reward)
             # print(action_info[2]['vf_preds'], reward)
 
+            fs.append(info['f'])
+            cs.append(info['changes'])
+            vd.append(info['voltage_deviations'])
+
             step += 1
+            pbar.update(1)
 
     fig, ax = plt.subplots()
     ax.set_title(f'Trainer {checkpoint}')
@@ -146,16 +160,43 @@ def eval_trainer(checkpoint):
     fig, ax = plt.subplots()
     ax.plot(values['reward'], label='$r$')
     ax.set_title(f'Trainer {checkpoint} Reward')
+    ax.grid()
+
+    fig, ax = plt.subplots()
+    ax.set_title('q')
+    ax.plot(q_table.T[1:env.step_number, :])
+    ax.grid()
+
+    fig, ax = plt.subplots()
+    ax.set_title('v')
+    ax.plot(v_table.T[1:env.step_number, :])
+    ax.grid()
+
+    fig, ax = plt.subplots()
+    ax.set_title('f')
+    ax.plot(fs)
+    ax.grid()
+
+    fig, ax = plt.subplots()
+    ax.set_title('changes')
+    ax.plot(np.log10(cs))
+    ax.grid()
+
+    fig, ax = plt.subplots()
+    ax.set_title('voltage deviations')
+    ax.plot(vd)
+    ax.grid()
 
     logging.getLogger(f'Trainer_{checkpoint}').info(sum(values['reward']))
     env.close()
 
 
 if __name__ == '__main__':
-    ray.init(address='auto', _redis_password='5241590000000000')
+    ray.init(num_cpus=1)
     # with multiprocessing.pool.ThreadPool(4) as p:
     #     p.map(eval_trainer, range(10, 101, 10))
-    eval_trainer(100)
+    # eval_trainer(5500)
+    eval_trainer(150)
     plt.show()
     # for checkpoint in [40, 50, 60, 70, 80, 90, 100]:
     #     eval_trainer(checkpoint)

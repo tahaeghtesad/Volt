@@ -8,8 +8,12 @@ class SingleParamThirteenBus(gym.Env):
     def __init__(self, engine_pool, config):
         self.env = ThirteenBus(engine_pool, config)
 
-        self.action_space = gym.spaces.Box(np.log10(np.array([1e2, 1e-3, 1e-1, 1e-1])),
-                                           np.log10(np.array([1e-10, 1e3, 1e10, 1e4])))
+        self.action_space = gym.spaces.Box(low=-self.env.env_config['search_range'],
+                                           high=self.env.env_config['search_range'],
+                                           shape=(4,))
+
+        # self.action_space = gym.spaces.Box(low=np.log10(np.array([1e-3, 1e-1, 1e-1, 1e-2])),
+        #                                    high=np.log10(np.array([1e1, 1e2, 1e2, 1e2])))
 
         self.observation_space = self.env.observation_space
 
@@ -20,12 +24,7 @@ class SingleParamThirteenBus(gym.Env):
         return self.env.reset()
 
     def step(self, action: np.ndarray):
-        full_action = np.concatenate((
-            np.ones(self.env.n) * action[0],
-            np.ones(self.env.n) * action[1],
-            np.ones(self.env.n) * action[2],
-            np.ones(self.env.n) * action[3],
-        ))
+        full_action = action.repeat(self.n)
 
         return self.env.step(full_action)
 
