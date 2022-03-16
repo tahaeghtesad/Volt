@@ -47,6 +47,8 @@ config.update({
         'window_size': 10,
 
         'change_threshold': 0.2,
+
+        'reward_mode': 'steps',
     },
 
     # "lr": 5e-5,
@@ -150,42 +152,36 @@ def eval_trainer(checkpoint):
             pbar.update(1)
 
     fig, ax = plt.subplots()
-    ax.set_title(f'Trainer {checkpoint}')
+    ax.set_title(f'a')
     ax.plot(values['alpha'], label='$\\alpha$')
     ax.plot(values['beta'], label='$\\beta$')
     ax.plot(values['gamma'], label='$\\gamma$')
     ax.plot(values['c'], label='$c$')
-    ax.legend()
-
-    fig, ax = plt.subplots()
-    ax.plot(values['reward'], label='$r$')
-    ax.set_title(f'Trainer {checkpoint} Reward')
     ax.grid()
+    ax.legend()
+    fig.savefig('a.png')
 
     fig, ax = plt.subplots()
     ax.set_title('q')
-    ax.plot(q_table.T[1:env.step_number, :])
+    ax.plot(q_table.T[:env.step_number, :])
     ax.grid()
+    fig.savefig('q.png')
 
     fig, ax = plt.subplots()
     ax.set_title('v')
-    ax.plot(v_table.T[1:env.step_number, :])
+    ax.plot(v_table.T[:env.step_number, :])
     ax.grid()
+    fig.savefig('v.png')
 
     fig, ax = plt.subplots()
-    ax.set_title('f')
-    ax.plot(fs)
+    ax.set_title('r')
+    ax.plot(values['reward'], '-o', label='converged')
+    ax.plot(-np.array(cs), '-', label='changes')
+    ax.plot(-np.array(vd), '-', label='voltage_deviations')
+    # ax.plot(0.1 * np.ones(len(vd)), '-', label='0.1')
+    ax.legend()
     ax.grid()
-
-    fig, ax = plt.subplots()
-    ax.set_title('changes')
-    ax.plot(np.log10(cs))
-    ax.grid()
-
-    fig, ax = plt.subplots()
-    ax.set_title('voltage deviations')
-    ax.plot(vd)
-    ax.grid()
+    fig.savefig('r.png')
 
     logging.getLogger(f'Trainer_{checkpoint}').info(sum(values['reward']))
     env.close()

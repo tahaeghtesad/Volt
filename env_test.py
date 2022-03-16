@@ -29,8 +29,9 @@ from util.reusable_pool import ReusablePool
 # alpha, beta, c, gamma = {'alpha': -2.2329853389581658, 'beta': 0.12929655914177918, 'c': 0.25154342834675436, 'gamma': 2.3418920409325708}.values()
 # alpha, beta, gamma, c = (-1., 3.041845, 1.963370, 0.488047)
 # alpha, beta, gamma, c =  (-4.7603732969850086, -5.0000000000000000,  3.1174591404670213,  1.5842818460532611)
-alpha, beta, gamma, c = (-1.6145001260743783, 1.1579715364588790, 1.4101386575517729, -1.730091534553142)
+# alpha, beta, gamma, c = (-1.6145001260743783, 1.1579715364588790, 1.4101386575517729, -1.730091534553142)
 # alpha, beta, gamma, c = (1e-2, 1e0, 1e1, 1e-2)
+alpha, beta, gamma, c = (-1.6145001260743783, 1.1579715364588790, 1.4101386575517729, -1.7300915345531420)
 
 engine_pool = ReusablePool(1, ServerThread.init_matlab, ServerThread.clean_matlab)
 logging.basicConfig(stream=sys.stdout,
@@ -39,19 +40,19 @@ logging.basicConfig(stream=sys.stdout,
 
 env = ThirteenBus(engine_pool, env_config={
     'mode': 'all_control',
-    'search_range': 2,
+    'search_range': 2.3,
     'voltage_threshold': 0.05,
     'T': 3500,
     'repeat': 10,
     'window_size': 10,
-    'change_threshold': 0.8,
+    'change_threshold': 0.2,
+    'reward_mode': 'steps'
 })
 
 rs = []
 
 if __name__ == '__main__':
     for epoch in range(1):
-
         q_table = np.zeros((env.n, env.T // env.env_config['repeat']))
         v_table = np.zeros((env.n, env.T // env.env_config['repeat']))
         v_c_table = np.zeros((env.n, env.T // env.env_config['repeat']))
@@ -60,16 +61,17 @@ if __name__ == '__main__':
         xi_table = np.zeros((env.n, env.T // env.env_config['repeat']))
         q_hat_table = np.zeros((env.n, env.T // env.env_config['repeat']))
 
-
-        obs = env.reset()
+        _ = env.reset()
         done = False
         rewards = []
         fs = []
         cs = []
         fes = []
         vd = []
-        for step in tqdm(range(env.T // env.env_config['repeat'])):
-            obs, reward, done, info = env.step(np.concatenate((
+        pbar = tqdm(total=env.env_config['T'] / env.env_config['repeat'])
+        # for step in tqdm(range(env.T // env.env_config['repeat'])):
+        while not done:
+            _, reward, done, info = env.step(np.concatenate((
                 alpha * np.ones(env.n),
                 beta * np.ones(env.n),
                 gamma * np.ones(env.n),
@@ -91,27 +93,39 @@ if __name__ == '__main__':
 
             fes.append(info['fes'])
 
-            if done:
-                break
+            pbar.update(1)
 
-        plt.title('q')
-        plt.plot(q_table.T[1:-1, :])
-        plt.savefig('q.png')
-        plt.show()
+        fig, ax = plt.subplots()
+        ax.set_title(f'a')
+        ax.plot(alpha * np.ones(env.step_number), label='$\\alpha$')
+        ax.plot(beta * np.ones(env.step_number), label='$\\beta$')
+        ax.plot(gamma * np.ones(env.step_number), label='$\\gamma$')
+        ax.plot(c * np.ones(env.step_number), label='$c$')
+        ax.grid()
+        ax.legend()
+        fig.savefig('a.png')
 
-        plt.title('v')
-        plt.plot(v_table.T[1:-1, :])
-        plt.savefig('v.png')
-        plt.show()
+        fig, ax = plt.subplots()
+        ax.set_title('q')
+        ax.plot(q_table.T[:env.step_number, :])
+        ax.grid()
+        fig.savefig('q.png')
 
-        plt.title('r')
-        plt.plot(rewards[:-1], '-o', label='reward')
-        plt.plot(-np.array(cs[:-1]), '-', label='changes')
-        plt.plot(-np.array(vd[:-1]), '-', label='voltage_deviations')
-        plt.plot(0.1 * np.ones(len(vd)), '-', label='0.1')
-        plt.legend()
-        plt.savefig('r.png')
-        plt.show()
+        fig, ax = plt.subplots()
+        ax.set_title('v')
+        ax.plot(v_table.T[:env.step_number, :])
+        ax.grid()
+        fig.savefig('v.png')
+
+        fig, ax = plt.subplots()
+        ax.set_title('r')
+        ax.plot(rewards, '-o', label='converged')
+        ax.plot(-np.array(cs), '-', label='changes')
+        ax.plot(-np.array(vd), '-', label='voltage_deviations')
+        # ax.plot(0.1 * np.ones(len(vd)), '-', label='0.1')
+        ax.legend()
+        ax.grid()
+        fig.savefig('r.png')
 
         # plt.title('f')
         # plt.plot(fs[:-1])
@@ -147,6 +161,7 @@ if __name__ == '__main__':
         # plt.plot(v_c_table.T[1:-1, :])
         # plt.savefig('v_c.png')
         # plt.show()
+        plt.show()
 
         print(sum(rewards))
         rs.append(sum(rewards))

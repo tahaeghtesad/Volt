@@ -41,6 +41,8 @@ config.update({
         'window_size': 10,
 
         'change_threshold': 0.20,
+
+        'reward_mode': 'continuous',
     },
 
     "model": model,
