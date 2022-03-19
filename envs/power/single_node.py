@@ -1,12 +1,12 @@
 import gym
 import numpy as np
 
-from envs.power.thirteen_bus import ThirteenBus
+from envs.power.matlab_wrapper import MatlabWrapperEnv
 
 
 class SingleNode(gym.Env):
     def __init__(self, config):
-        self.env = ThirteenBus(config)
+        self.env = MatlabWrapperEnv(config)
         self.index = config['index']
         self.search_range = config['search_range']
         # self.action_space = gym.spaces.Box(

@@ -1,33 +1,12 @@
-import numpy as np
-from tqdm import tqdm
 import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
+from tqdm import tqdm
 
-from envs.power.thirteen_bus import ThirteenBus
-from envs.remote.client import RemoteEnv
+import config
+from envs.power.matlab_wrapper import MatlabWrapperEnv
 from remote_server import ServerThread
 from util.reusable_pool import ReusablePool
-
-config = {
-    'mode': 'all_control',
-    'voltage_threshold': 0.05,
-
-    # Search range around the default parameters
-    'search_range': 2,
-
-    # Length of history
-    'history_size': 1,
-
-    # Episode length
-    'T': 12,
-
-    # Repeat
-    'repeat': 1,
-
-    'window_size': 10,
-
-    'change_threshold': 0.2,
-}
 
 
 class Tester:
@@ -35,7 +14,7 @@ class Tester:
     def __init__(self, config=None):
         super().__init__()
         engine_pool = ReusablePool(1, ServerThread.init_matlab, ServerThread.clean_matlab)
-        self.env = ThirteenBus(engine_pool=engine_pool, env_config=config)
+        self.env = MatlabWrapperEnv(engine_pool=engine_pool, env_config=config)
 
     def eval(self, alpha, beta, gamma, c):
         rewards = []
@@ -64,7 +43,7 @@ if __name__ == '__main__':
     c_range = np.linspace(-1, 3, 20)
     values = np.zeros((len(alpha_range), len(c_range)))
 
-    tester = Tester(config)
+    tester = Tester(config.env_config)
 
     for i, alpha in enumerate(tqdm(alpha_range)):
         for j, c in enumerate(c_range):

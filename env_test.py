@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from config import env_config
 
-from envs.power.thirteen_bus import ThirteenBus
+from envs.power.matlab_wrapper import MatlabWrapperEnv
 from remote_server import ServerThread
 from util.reusable_pool import ReusablePool
 
@@ -36,7 +36,7 @@ logging.basicConfig(stream=sys.stdout,
                     format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-env = ThirteenBus(engine_pool, env_config=env_config)
+env = MatlabWrapperEnv(engine_pool, env_config=env_config)
 
 rs = []
 

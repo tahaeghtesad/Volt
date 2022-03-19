@@ -14,7 +14,7 @@ from scipy.stats import linregress
 from util.reusable_pool import ReusablePool
 
 
-class ThirteenBus(gym.Env):
+class MatlabWrapperEnv(gym.Env):
     def __init__(self, engine_pool: ReusablePool, env_config):
         self.logger = logging.getLogger(__name__)
         self.matlab_running = True

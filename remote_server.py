@@ -4,14 +4,12 @@ import sys
 import time
 from threading import Thread
 
-from envs.power.onetwentythree_bus import OneTwentyThreeBus
-from envs.power.thirteen_bus import ThirteenBus
-from envs.power.thirteen_bus_single_param import SingleParamThirteenBus
+import matlab.engine
+
+from envs.power.matlab_wrapper_single_param import MatlabWrapperEnvSingleParam
 from util.env_util import Historitized
 from util.network_util import Messenger
 from util.reusable_pool import ReusablePool
-
-import matlab.engine
 
 
 class ServerThread(Thread):
@@ -44,7 +42,7 @@ class ServerThread(Thread):
         self.logger.info(f'Environment Config: {info["config"]}')
         assert info['event'] == 'start', 'Client Error.'
 
-        self.env = Historitized(SingleParamThirteenBus(self.engine_pool, info['config']), info['config']['history_size'])
+        self.env = Historitized(MatlabWrapperEnvSingleParam(self.engine_pool, info['config']), info['config']['history_size'])
         self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=self.env.env.n, T=self.env.env.T))
 
         while not self.finished:
