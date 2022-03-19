@@ -1,7 +1,4 @@
 import logging
-import multiprocessing.pool
-import os
-import random
 import sys
 
 import matplotlib.pyplot as plt
@@ -9,60 +6,38 @@ import numpy as np
 import ray
 import ray.rllib.agents.ppo as ppo
 from ray.rllib.agents.trainer import COMMON_CONFIG
+from ray.rllib.models import MODEL_DEFAULTS
 from ray.tune import register_env
 from tqdm import tqdm
 
+from config import model_config, ppo_training_config, env_config
 from envs.remote.client import RemoteEnv
 
 logging.basicConfig(stream=sys.stdout, format='%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
+model = MODEL_DEFAULTS.copy()
 config = dict()
 
 config.update(COMMON_CONFIG)
 config.update(ppo.DEFAULT_CONFIG)
 
-# My config!
+model.update(model_config)
+config.update(ppo_training_config)
+
 config.update({
 
     'env': 'volt',
-    'env_config': {
-
-        'mode': 'all_control',
-
-        'voltage_threshold': 0.05,
-        # 'power_injection_cost': 0.2,
-
-        # Search range around the default parameters
-        'search_range': 3,
-
-        # Length of history
-        'history_size': 1,
-
-        # Episode length
-        'T': 3500,
-
-        'repeat': 10,
-
-        'window_size': 10,
-
-        'change_threshold': 0.2,
-
-        'reward_mode': 'steps',
-    },
-
-    # "lr": 5e-5,
-
-    # Clip param for the value function. Note that this is sensitive to the
-    # scale of the rewards. If your expected V is large, increase this.
-    # "vf_clip_param": 400.0,
+    'env_config': env_config,
+    "model": model,
 
     "num_workers": 1,
 
-    # Number of GPU
-    # "num_gpus": 1 / 1,
+    "num_gpus": 1 / 1,
 
     'log_level': logging.INFO,
+
+    "normalize_actions": True,
 
     'evaluation_config': {
         'explore': False
@@ -86,12 +61,13 @@ def load_trainer(remote_path):
 register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
 
 
-def eval_trainer(checkpoint):
+def eval_trainer():
+    checkpoint = 200
     env = RemoteEnv('localhost', 6985, config=config['env_config'])
     trainer = load_trainer(
         f'/home/teghtesa/ray_results/'
-        # f'PPO_2022-03-08_17-47-41/PPO_volt_24e5a_00000_0_2022-03-08_17-47-41'
-        f'PPO_2022-03-10_11-41-05/PPO_volt_4320a_00000_0_2022-03-10_11-41-06'
+        # f'PPO_2022-03-18_19-55-35/PPO_volt_4904e_00000_0_2022-03-18_19-55-35'  # Ieee 13 best
+        f'PPO_2022-03-19_12-56-57/PPO_volt_f83dd_00000_0_2022-03-19_12-56-57'  # Ieee 123 fixed best
         f'/checkpoint_{checkpoint:06d}/checkpoint-{checkpoint}')
 
     values = {
@@ -121,7 +97,7 @@ def eval_trainer(checkpoint):
             # if step < 4:
             #     action = np.log10(np.array(list(config['env_config']['defaults'].values())))
             # else:
-            action = trainer.compute_single_action(obs, unsquash_action=True, clip_action=False, explore=True)
+            action = trainer.compute_single_action(obs, unsquash_action=True, clip_action=True, explore=True)
             # action_info = trainer.get_policy().compute_single_action(obs, prev_action=action, prev_reward=reward, explore=False)
             # action = action_info[0]
             # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
@@ -150,6 +126,7 @@ def eval_trainer(checkpoint):
 
             step += 1
             pbar.update(1)
+            pbar.set_description(f'{sum(values["reward"]):.2f}|{action[0]:.2f} {action[1]:.2f} {action[2]:.2f} {action[3]:.2f}|')
 
     fig, ax = plt.subplots()
     ax.set_title(f'a')
@@ -192,7 +169,7 @@ if __name__ == '__main__':
     # with multiprocessing.pool.ThreadPool(4) as p:
     #     p.map(eval_trainer, range(10, 101, 10))
     # eval_trainer(5500)
-    eval_trainer(150)
+    eval_trainer()
     plt.show()
     # for checkpoint in [40, 50, 60, 70, 80, 90, 100]:
     #     eval_trainer(checkpoint)

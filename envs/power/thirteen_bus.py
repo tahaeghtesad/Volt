@@ -23,15 +23,16 @@ class ThirteenBus(gym.Env):
         self.env_config = env_config
 
         self.engine = self.engine_pool.acquire()
-        self.engine.addpath('C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\ieee13_all_control')
+        self.engine.addpath(f'C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\{env_config["system"]}_{env_config["mode"]}')
 
         self.null_stream = io.StringIO()
 
         self.T = self.env_config['T']
-        # self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
-        # self.n = int(self.engine.workspace['n'])
-        self.n = 29
+        self.engine.workspace['T'] = int(1.5 * self.T + 1)
+        self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
+
+        self.n = int(self.engine.workspace['n'])
 
         self.step_number = 0
         self.episode = 0
@@ -43,29 +44,26 @@ class ThirteenBus(gym.Env):
                                            high=self.env_config['search_range'],
                                            shape=(self.n * 4,))
 
-        self.observation_space = gym.spaces.Box(-10000, 10000, (self.n,))
+        self.observation_space = gym.spaces.Box(-10000, 10000, (self.n * 2 + 1,))  # q, v, time
 
         self.q_history = [[] for _ in range(self.n)]
-        self.converged_history = []
+        self.prev_q = np.zeros(self.n)
 
     def reset(self):
         self.episode += 1
         self.step_number = 0
 
-        self.engine.workspace['T'] = int(1.5 * self.T + 1)
-
         self.engine.eval('clc', nargout=0)
+        self.engine.workspace['T'] = int(1.5 * self.T + 1)
+        # self.engine.workspace['load_var'] = float(np.random.random() * 0.4 + 0.8)
+        self.engine.workspace['load_var'] = self.env_config['load_var']
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
-        # obs, reward, done, info = self.step(np.repeat(np.array([self.env_config['defaults']['alpha'],
-        #                                               self.env_config['defaults']['beta'],
-        #                                               self.env_config['defaults']['gamma'],
-        #                                               self.env_config['defaults']['c']]), self.n))
-
         self.q_history = [[] for _ in range(self.n)]
-        self.converged_history = []
 
-        return np.zeros((self.n, 1))
+        self.prev_q = np.zeros(self.n)
+
+        return np.zeros(self.n * 2 + 1)
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         action = np.power(10, action)
@@ -87,16 +85,10 @@ class ThirteenBus(gym.Env):
             q=np.array(var['q'], dtype=np.float),
             fes=np.array([var['fes']], dtype=np.float),
             f=np.array([var['f']], dtype=np.float),
-            v_c=np.array(var['v_c'], dtype=np.float),
-            lambda_bar=np.array(var['lambda_bar'], dtype=np.float),
-            lambda_un=np.array(var['lambda_un'], dtype=np.float),
-            xi=np.array(var['xi'], dtype=np.float),
-            q_hat=np.array(var['q_hat'], dtype=np.float),
         )
 
-        obs = info['v'].flatten()
-        # q_norm = np.linalg.norm(q)
-        # reward = -q_norm - fes[0]
+        obs = np.concatenate((info['v'].flatten(), self.prev_q - info['q'].flatten(), np.array([self.step_number])))
+        self.prev_q = info['q'].flatten()
 
         for c in range(self.n):
             self.q_history[c].append(info['q'][c][0])
@@ -104,7 +96,7 @@ class ThirteenBus(gym.Env):
                 del self.q_history[c][0]
 
         voltages_converged = np.all(np.abs(info['v'] - 1) < self.env_config['voltage_threshold'] * 1.1)
-        voltage_deviations = np.sum(np.clip(np.abs(info['v'] - 1) - self.env_config['voltage_threshold'], 0, None))
+        voltage_deviations = np.mean(np.clip(np.abs(info['v'] - 1) - self.env_config['voltage_threshold'], 0, None))
         changes = np.mean([np.mean(np.clip(
             np.abs(self.q_history[c][-1] - np.array(self.q_history[c])) / self.q_history[c][-1] - self.env_config[
                 'change_threshold'], 0, None)) for c in range(self.n)])
@@ -120,35 +112,26 @@ class ThirteenBus(gym.Env):
         info['changes'] = changes
         info['voltage_deviations'] = voltage_deviations
 
-        self.converged_history.append(converged)
-        if len(self.converged_history) > 10:
-            del self.converged_history[0]
+        done = self.step_number == self.T // self.env_config['repeat'] or converged or (
+               self.env_config['reward_mode'] == 'continuous' and
+               not voltages_converged and
+               self.step_number * self.env_config['repeat'] >= self.env_config['voltage_convergence_grace_period'])
 
-        done = self.step_number == self.T // self.env_config['repeat'] or (
-                    all(self.converged_history) and len(self.converged_history) == 10) or (
-                self.env_config['reward_mode'] == 'continuous' and not voltages_converged and self.step_number * self.env_config['repeat'] >= 20)
-
-        reward = -1 # This is not required!
+        reward = -1  # This is not required!
 
         if self.env_config['reward_mode'] == 'continuous':
             reward = 0
-            if voltages_converged:
-                reward += 1
-            else:
-                reward -= 5.0 * voltage_deviations
 
-            if changes_converged:
-                reward += 1
-            else:
-                reward -= 1.0 * changes
+            reward += np.exp(-changes)
+            reward += np.exp(-voltage_deviations)
 
-            if all(self.converged_history) and len(self.converged_history) == 10:
-                reward += 100
+            if converged:
+                reward += 3 * (self.env_config['T'] // self.env_config['repeat'] - self.step_number + 1)  # This number is multiplied by 2 since max step reward for each step is 2!
 
-            reward *= 0.1
+            reward *= 0.01
 
         elif self.env_config['reward_mode'] == 'steps':
-            if all(self.converged_history) and len(self.converged_history) == 10:
+            if converged:
                 reward = 0
             else:
                 reward = -1

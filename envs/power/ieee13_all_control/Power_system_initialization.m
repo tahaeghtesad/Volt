@@ -5,6 +5,10 @@
 % NETWORK
 % MODEL.............................................................................
 % network data
+
+global T
+global load_var
+
 Topology_13_bus
 
 [D_P,D_Q,Ao,D_p_abc,D_q_abc,Data] = gen_ZP_ZQ(Data); % G.R_matrix =D_P , G.X_matrix=D_Q
@@ -33,7 +37,7 @@ Data.v_un = 0.95^2; % lower limit for v
 Data.q_bar = +1;% upper limit for q
 Data.q_un  = -1; % lower limit for q
 
- Data.load_var = 1; % 100% loading
+ Data.load_var = load_var; % 100% loading
 
  % Defining the simulation case
 simu_case = 'static';  % static or dynamic  or static_param(paramter sensitivity under static conditions)
@@ -158,11 +162,9 @@ n = size(Data.q_un_vec,1); % number of controllable nodes
 
 global var
 global g_data
-global g_T
 global g_G
 
 g_data = Data;
-g_T = T;
 g_G = G;
 
 var.v=zeros(n,T);

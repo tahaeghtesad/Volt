@@ -1,12 +1,11 @@
 function optdist_vc_ML(params, t)
 
     global g_data
-    global g_T
+    global T
     global g_G
     global var
 
 Data = g_data;
-T = g_T;
 G = g_G;
 
 %UNTITLED4 Summary of this function goes here

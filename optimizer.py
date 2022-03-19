@@ -1,41 +1,15 @@
 import math
 
 import numpy as np
+import pandas as pd
 import ray
 from ray import tune
 from ray.tune import Trainable
-from ray.tune.schedulers import FIFOScheduler, AsyncHyperBandScheduler
 from ray.tune.suggest.bayesopt import BayesOptSearch
 from ray.tune.utils.log import Verbosity
-from tqdm import tqdm
-import pandas as pd
 
 from envs.remote.client import RemoteEnv
-
-config = {
-    'mode': 'all_control',
-    'voltage_threshold': 0.05,
-
-    # Search range around the default parameters
-    'search_range': 2.3,
-
-    # Length of history
-    'history_size': 1,
-
-    # Episode length
-    'T': 3500,
-
-    # Repeat
-    'repeat': 10,
-
-    'epochs': 1,
-
-    'window_size': 10,
-
-    'change_threshold': 0.2,
-
-    'reward_mode': 'steps'  # either 'steps' or 'continuous'
-}
+from config import env_config
 
 
 class VC(Trainable):
@@ -98,10 +72,10 @@ points_to_evaluate = [dict(alpha=math.log10(0.002), beta=math.log10(0.5), gamma=
 
 
 search_space = {
-    'alpha': (-config['search_range'], config['search_range']),
-    'beta': (-config['search_range'], config['search_range']),
-    'gamma': (-config['search_range'], config['search_range']),
-    'c': (-config['search_range'], config['search_range']),
+    'alpha': (-env_config['search_range'], env_config['search_range']),
+    'beta': (-env_config['search_range'], env_config['search_range']),
+    'gamma': (-env_config['search_range'], env_config['search_range']),
+    'c': (-env_config['search_range'], env_config['search_range']),
 }
 
 if __name__ == '__main__':
@@ -109,7 +83,7 @@ if __name__ == '__main__':
     pd.set_option("display.precision", 16)
     analysis = tune.run(
         VC,
-        config=config,
+        config=env_config,
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
                                   points_to_evaluate=points_to_evaluate,
@@ -125,6 +99,6 @@ if __name__ == '__main__':
     )
 
     with open('log.log', 'a') as fd:
-        fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']]))
+        fd.write(str(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(30)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']]))
 
-    print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(10)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']])
+    print(analysis.results_df.sort_values(by=['episode_reward'], ascending=False).head(30)[['config.alpha', 'config.beta', 'config.gamma', 'config.c', 'episode_reward']])
