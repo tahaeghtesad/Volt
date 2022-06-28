@@ -83,7 +83,8 @@ Data.v_un_vec  = Data.v_un*ones(G.n,1);
 
 % All parameters for control nodes only
 Data.c_price = 10;
-Data.s_max = rand(G.phase_control_nodes,1)*0.5+0.5;
+%Data.s_max = rand(G.phase_control_nodes,1)*0.5+0.5;
+Data.s_max = ones(G.phase_control_nodes,1) * 0.75;
 Data.a = zeros(G.phase_control_nodes,1);
 Data.a(1:G.phase_control_nodes) = 2* Data.c_price./Data.s_max(1:G.phase_control_nodes);%ones(N,1);%1+rand(N,1);% ones(N,1);
 %a = a.*(randi(2,n,1)-1); % some of the a_i will be set as zero for zero cost function

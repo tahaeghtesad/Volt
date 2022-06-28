@@ -5,11 +5,11 @@ from envs.power.matlab_wrapper import MatlabWrapperEnv
 
 
 class MatlabWrapperEnvSingleParam(gym.Env):
-    def __init__(self, engine_pool, config):
-        self.env = MatlabWrapperEnv(engine_pool, config)
+    def __init__(self, env_id, engine_pool, config):
+        self.env = MatlabWrapperEnv(env_id, engine_pool, config)
 
-        self.action_space = gym.spaces.Box(low=-self.env.env_config['search_range'],
-                                           high=self.env.env_config['search_range'],
+        self.action_space = gym.spaces.Box(low=np.array(config['range']['low']),
+                                           high=np.array(config['range']['high']),
                                            shape=(4,))
 
         # self.action_space = gym.spaces.Box(low=np.log10(np.array([1e-3, 1e-1, 1e-1, 1e-2])),

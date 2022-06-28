@@ -24,11 +24,22 @@ config.update(ppo.DEFAULT_CONFIG)
 
 model.update(model_config)
 config.update(ppo_training_config)
+# model.update({
+#     'fcnet_hiddens': [512, 512],
+# })
+
+environment_config = dict()
+environment_config.update(env_config)
+environment_config.update({
+    'system': 'ieee123',
+    'mode': 'fixed_control',
+    'reward_mode': 'steps'
+})
 
 config.update({
 
     'env': 'volt',
-    'env_config': env_config,
+    'env_config': environment_config,
     "model": model,
 
     "num_workers": 1,
@@ -62,12 +73,11 @@ register_env("volt", lambda config: RemoteEnv('localhost', 6985, config))
 
 
 def eval_trainer():
-    checkpoint = 200
+    checkpoint = 512
     env = RemoteEnv('localhost', 6985, config=config['env_config'])
     trainer = load_trainer(
         f'/home/teghtesa/ray_results/'
-        # f'PPO_2022-03-18_19-55-35/PPO_volt_4904e_00000_0_2022-03-18_19-55-35'  # Ieee 13 best
-        f'PPO_2022-03-19_12-56-57/PPO_volt_f83dd_00000_0_2022-03-19_12-56-57'  # Ieee 123 fixed best
+        f'PPOTrainer_2022-05-09_11-00-30/PPOTrainer_volt_26dae_00000_0_2022-05-09_11-00-31'
         f'/checkpoint_{checkpoint:06d}/checkpoint-{checkpoint}')
 
     values = {
@@ -84,49 +94,52 @@ def eval_trainer():
     cs = []
     vd = []
 
-    for i in range(1):
+    for i in range(config['env_config']['epochs']):
         step = 0
         done = False
         obs = env.reset()
         action = np.zeros(4)
         reward = 0
-        pbar = tqdm(total=config['env_config']['T']/config['env_config']['repeat'])
+        pbar = tqdm(total=config['env_config']['T']//config['env_config']['repeat'])
 
         # for step in range(env.T // config['env_config']['repeat']):
         while not done:
-            # if step < 4:
-            #     action = np.log10(np.array(list(config['env_config']['defaults'].values())))
-            # else:
-            action = trainer.compute_single_action(obs, unsquash_action=True, clip_action=True, explore=True)
-            # action_info = trainer.get_policy().compute_single_action(obs, prev_action=action, prev_reward=reward, explore=False)
-            # action = action_info[0]
-            # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
-            #                             config['env_config']['defaults']['beta'],
-            #                             config['env_config']['defaults']['gamma'],
-            #                             config['env_config']['defaults']['c']]))
+            try:
+                # if step < 4:
+                #     action = np.log10(np.array(list(config['env_config']['defaults'].values())))
+                # else:
+                action = trainer.compute_single_action(obs, unsquash_action=True, clip_action=True, explore=False)
+                # action_info = trainer.get_policy().compute_single_action(obs, prev_action=action, prev_reward=reward, explore=False)
+                # action = action_info[0]
+                # action = np.log10(np.array([config['env_config']['defaults']['alpha'],
+                #                             config['env_config']['defaults']['beta'],
+                #                             config['env_config']['defaults']['gamma'],
+                #                             config['env_config']['defaults']['c']]))
 
-            values['alpha'].append(action[0])
-            values['beta'].append(action[1])
-            values['gamma'].append(action[2])
-            values['c'].append(action[3])
+                values['alpha'].append(action[0])
+                values['beta'].append(action[1])
+                values['gamma'].append(action[2])
+                values['c'].append(action[3])
 
-            obs, reward, done, info = env.step(action)
-            # print(f'obs: {obs}')
-            # print(f'reward: {reward}')
-            q_table[:, env.step_number - 1] = info['q'].reshape((env.n,))
-            v_table[:, env.step_number - 1] = info['v'].reshape((env.n,))
-            # print(f'action: {action}')
+                obs, reward, done, info = env.step(action)
+                # print(f'obs: {obs}')
+                # print(f'reward: {reward}')
+                q_table[:, env.step_number - 1] = info['q'].reshape((env.n,))
+                v_table[:, env.step_number - 1] = info['v'].reshape((env.n,))
+                # print(f'action: {action}')
 
-            values['reward'].append(reward)
-            # print(action_info[2]['vf_preds'], reward)
+                values['reward'].append(reward)
+                # print(action_info[2]['vf_preds'], reward)
 
-            fs.append(info['f'])
-            cs.append(info['changes'])
-            vd.append(info['voltage_deviations'])
+                fs.append(info['f'])
+                cs.append(info['changes'])
+                vd.append(info['voltage_deviations'])
 
-            step += 1
-            pbar.update(1)
-            pbar.set_description(f'{sum(values["reward"]):.2f}|{action[0]:.2f} {action[1]:.2f} {action[2]:.2f} {action[3]:.2f}|')
+                step += 1
+                pbar.update(1)
+                pbar.set_description(f'{sum(values["reward"]):.2f}|{action[0]:.2f} {action[1]:.2f} {action[2]:.2f} {action[3]:.2f}|')
+            except KeyboardInterrupt:
+                break
 
     fig, ax = plt.subplots()
     ax.set_title(f'a')
@@ -152,7 +165,7 @@ def eval_trainer():
 
     fig, ax = plt.subplots()
     ax.set_title('r')
-    ax.plot(values['reward'], '-o', label='converged')
+    ax.plot(values['reward'], '-o', label='reward')
     ax.plot(-np.array(cs), '-', label='changes')
     ax.plot(-np.array(vd), '-', label='voltage_deviations')
     # ax.plot(0.1 * np.ones(len(vd)), '-', label='0.1')

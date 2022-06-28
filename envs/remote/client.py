@@ -43,9 +43,9 @@ class RemoteEnv(gym.Env):
         self.step_number = 0
         self.epoch_number += 1
 
-        if self.epoch_number % 500 == 0:
-            self.messenger.conn.close()
-            self.__init_messenger()
+        # if self.epoch_number % 500 == 0:
+        #     self.messenger.conn.close()
+        #     self.__init_messenger()
 
         self.messenger.send_message(dict(event='reset'))
 
@@ -54,7 +54,7 @@ class RemoteEnv(gym.Env):
 
     def close(self):
         self.logger.info('Closing connection.')
-        self.messenger.send_message(dict(event='close'))
+        self.messenger.send_message(dict(event='close', data='Gracefully exiting.'))
         self.messenger.conn.close()
 
     def render(self, mode='human'):
