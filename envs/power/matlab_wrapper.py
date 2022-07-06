@@ -103,58 +103,44 @@ class MatlabWrapperEnv(gym.Env):
             if len(self.q_history[c]) > self.env_config['window_size']:
                 del self.q_history[c][0]
 
-        q_average = np.mean(np.array(self.q_history), axis=1)
-        obs = np.concatenate((info['v'].flatten(), q_average))
+        # q_average = np.mean(np.array(self.q_history), axis=1)
+        obs = np.concatenate((info['v'].flatten(), info['q'].flatten()))
         # obs = info['v'].flatten()
         # self.prev_q = info['q'].flatten()
 
-        critical_voltage_met = np.all(np.abs(info['v'] - 1) < self.env_config['voltage_threshold'] * (
-                1 + self.env_config['voltage_violation_critical_threshold']))
-
-        voltages_converged = np.all(np.abs(info['v'] - 1) < self.env_config['voltage_threshold'])
-
+        # critical_voltage_met = np.all(np.abs(info['v'] - 1) < self.env_config['voltage_threshold'] * (
+        #         1 + self.env_config['voltage_violation_critical_threshold']))
+        #
+        # voltages_converged = np.all(np.abs(info['v'] - 1) < self.env_config['voltage_threshold'])
+        #
         voltage_deviations = np.mean(np.clip(np.abs(info['v'] - 1) - self.env_config['voltage_threshold'], 0, None))
-        changes = np.mean([np.mean(np.clip(
-            np.abs(self.q_history[c][-1] - np.array(self.q_history[c])) / np.abs(self.q_history[c][-1]) - self.env_config[
-                'change_threshold'], 0, None)) for c in range(self.n)])
-
-        changes_converged = \
-            len(self.q_history[0]) >= self.env_config['window_size'] and \
-            all([np.all(
-                np.abs(self.q_history[c][-1] - np.array(self.q_history[c])) / np.abs(self.q_history[c][-1]) < self.env_config[
-                    'change_threshold']) for c in range(self.n)])
-
-        converged = voltages_converged and changes_converged
-
-        info['changes'] = changes
+        # changes = np.mean([np.mean(np.clip(
+        #     np.abs(self.q_history[c][-1] - np.array(self.q_history[c])) / np.abs(self.q_history[c][-1]) - self.env_config[
+        #         'change_threshold'], 0, None)) for c in range(self.n)])
+        #
+        # changes_converged = \
+        #     len(self.q_history[0]) >= self.env_config['window_size'] and \
+        #     all([np.all(
+        #         np.abs(self.q_history[c][-1] - np.array(self.q_history[c])) / np.abs(self.q_history[c][-1]) < self.env_config[
+        #             'change_threshold']) for c in range(self.n)])
+        #
+        # converged = voltages_converged and changes_converged
+        #
+        # info['changes'] = changes
         info['voltage_deviations'] = voltage_deviations
 
-        done = self.step_number == self.T // self.env_config['repeat'] or converged \
-               or (
-                       self.env_config['reward_mode'] == 'continuous' and
-                       not critical_voltage_met)
+        done = self.step_number == self.T // self.env_config['repeat'] or (np.abs(info['q']) > 0.5).any()
 
-        if self.env_config['reward_mode'] == 'continuous':
+        reward = 0
 
-            reward = 0
+        # reward = .5 * (np.exp(-changes) - 1)\
+        #        + .5 * (np.exp(-voltage_deviations) - 1)
 
-            # reward = .5 * (np.exp(-changes) - 1)\
-            #        + .5 * (np.exp(-voltage_deviations) - 1)
+        reward += (np.exp(-voltage_deviations) - 1)
+        reward *= (1 - self.env_config['gamma'])
 
-            # reward *= (1 - self.env_config['gamma'])
-
-            if not critical_voltage_met:
-                reward -= 1
-
-            if converged:
-                reward += 1
-                self.logger.info(f'Converged at step {self.step_number}')
-
-        else:
-            if converged:
-                reward = 0
-            else:
-                reward = -1
+        if (np.abs(info['q']) > 0.5).any():
+            reward -= 1
 
         return obs, reward, done, info
 

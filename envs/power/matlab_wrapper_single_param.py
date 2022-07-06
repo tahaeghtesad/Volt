@@ -24,7 +24,7 @@ class MatlabWrapperEnvSingleParam(gym.Env):
         return self.env.reset()
 
     def step(self, action: np.ndarray):
-        full_action = action.repeat(self.n)
+        full_action = np.repeat(action, self.n)
 
         return self.env.step(full_action)
 
