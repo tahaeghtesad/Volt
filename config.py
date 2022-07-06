@@ -3,7 +3,7 @@ gamma = 0.99
 env_config = {
     'system': 'ieee13',
     'mode': 'all_control',
-    'load_var': 1.0,  # can be floating point (between 0.8 and 1.2) or 'dynamic'
+    'load_var': 'dynamic',  # can be floating point (between 0.8 and 1.2) or 'dynamic'
     'voltage_threshold': 0.05,  # ([0.95, 1.05])
     'range': {  # alpha, beta, gamma, c, respectively
         'low': [-3, -2, 0, -1],
@@ -16,13 +16,11 @@ env_config = {
     # Length of history
     'history_size': 1,
     # Episode length
-    'T': 3000,
-    'repeat': 10,
+    'T': 800,
+    'repeat': 1,
     'epochs': 1,  # for optimizer.py to average the episode reward over n epochs
-    'window_size': 20,
-    'change_threshold': 0.2,
-    'reward_mode': 'steps',
-    'voltage_violation_critical_threshold': 1.0,  # 50% ([0.925, 1.075]) - 100% ([0.9, 1.1])
+    'window_size': 200,
+    'change_threshold': 0.05,
     'gamma': gamma,
 }
 
