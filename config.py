@@ -16,10 +16,10 @@ env_config = {
     # Length of history
     'history_size': 1,
     # Episode length
-    'T': 800,
+    'T': 1200,
     'repeat': 1,
     'epochs': 1,  # for optimizer.py to average the episode reward over n epochs
-    'window_size': 200,
+    'window_size': 500,
     'change_threshold': 0.05,
     'gamma': gamma,
 }
