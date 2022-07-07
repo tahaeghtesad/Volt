@@ -37,7 +37,6 @@ def get_single_trajectory(env, actor):
     rewards = []
     next_states = []
     dones = []
-    probs = []
 
     observation = env.reset()
     done = False
@@ -63,7 +62,6 @@ def get_single_trajectory(env, actor):
         rewards.append(reward)
         next_states.append(new_obs)
         dones.append(done)
-        probs.append(prob)
 
         observation = new_obs
 
@@ -82,7 +80,6 @@ def get_single_trajectory(env, actor):
         rewards=rewards[:convergence_time],
         next_states=np.array(next_states)[:convergence_time],
         dones=np.array(dones)[:convergence_time],
-        probs=np.array(probs)[:convergence_time],
     )
 
 
@@ -134,10 +131,10 @@ def calculate_gae(rewards, state_vals, next_state_vals, dones, gamma, lam):
 def train(epoch, optimizer, actor, critic, trajectories,
           gamma: float, lam: float, epsilon: float, beta: float, c_1: float, c_2: float):
 
-    old_distributions = [get_distribution(actor(t['states'])) for t in trajectories]
+    old_distributions = [get_distribution(actor(t['states']) for t in trajectories)]
+    old_probs = [old_distributions[t].prob(trajectories[t]['actions']) for t in range(len(trajectories))]
 
-    for it, (trajectory, distribution) in enumerate(zip(trajectories, old_distributions)):
-
+    for it, trajectory, old_distribution, old_prob in enumerate(zip(trajectories, old_distributions, old_probs)):
         it_log = epoch * len(trajectories) + it
 
         with tf.GradientTape() as actor_tape, tf.GradientTape() as critic_tape:
@@ -147,8 +144,8 @@ def train(epoch, optimizer, actor, critic, trajectories,
 
             distribution = get_distribution(action_logits)
             probs = distribution.prob(trajectory['actions'])
-            kl = distribution.kl_divergence(distribution)
-            r_t = probs / trajectory['probs']
+            kl = old_distribution.kl_divergence(distribution)
+            r_t = probs / old_prob
             gae = calculate_gae(trajectory['rewards'], state_val, next_state_val, trajectory['dones'], gamma, lam)
             entropy = distribution.entropy()
 
