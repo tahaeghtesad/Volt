@@ -131,7 +131,7 @@ def calculate_gae(rewards, state_vals, next_state_vals, dones, gamma, lam):
 def train(epoch, optimizer, actor, critic, trajectories,
           gamma: float, lam: float, epsilon: float, beta: float, c_1: float, c_2: float):
 
-    old_distributions = [get_distribution(actor(t['states']) for t in trajectories)]
+    old_distributions = [get_distribution(actor(t['states'])) for t in trajectories]
     old_probs = [old_distributions[t].prob(trajectories[t]['actions']) for t in range(len(trajectories))]
 
     for it, trajectory, old_distribution, old_prob in enumerate(zip(trajectories, old_distributions, old_probs)):
@@ -229,4 +229,4 @@ if __name__ == '__main__':
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(16)
+    main(8)
