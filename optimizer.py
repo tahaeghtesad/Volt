@@ -10,6 +10,7 @@ from ray.tune.utils.log import Verbosity
 
 from envs.remote.client import RemoteEnv
 from config import env_config
+import tensorflow as tf
 
 
 class VC(Trainable):
@@ -18,28 +19,60 @@ class VC(Trainable):
         super().__init__(config, logger_creator)
         self.env = RemoteEnv('localhost', 6985, self.config)
 
+    def get_rewards(self, states, rewards):
+        voltages, reactive_powers = tf.split(states, 2, axis=1)
+        ret = tf.TensorArray(tf.float32, size=states.shape[0])
+        ret = ret.write(0, rewards[0])
+
+        for t in range(1, len(states)):
+            if tf.reduce_all(tf.abs(voltages[t] - 1) < env_config['voltage_threshold'] * 1.023) and \
+                    tf.reduce_all(tf.abs(reactive_powers[t:t + env_config['window_size'], :] - reactive_powers[t, :]) <
+                                  env_config['change_threshold']):
+                ret = ret.write(t, 1)
+            else:
+                ret = ret.write(t, 0)
+
+        return ret.stack()
+
     def step(self):
         epoch_rewards = []
 
         for epoch in range(self.config['epochs']):
-            obs = self.env.reset()
+            states = []
+            rewards = []
+            next_states = []
+            dones = []
+
+            observation = self.env.reset()
             done = False
-            epoch_reward = 0
+
             while not done:
-                obs, reward, done, info = self.env.step(
-                    np.array([
+
+                new_obs, reward, done, info = self.env.step(np.array([
                         self.config['alpha'],
                         self.config['beta'],
                         self.config['gamma'],
                         self.config['c']]
-                    )
-                )
+                    ))
 
-                epoch_reward += -reward
+                states.append(observation)
+                rewards.append(reward)
+                next_states.append(new_obs)
+                dones.append(done)
 
-            epoch_rewards.append(epoch_reward)
+                observation = new_obs
 
-        epoch_rewards = np.array(epoch_rewards)
+            rewards = self.get_rewards(np.array(states), np.array(rewards))
+            convergence_time = np.where(rewards == 1)[0]
+            if len(np.where(rewards == 1)[0]) > 0:
+                convergence_time = convergence_time[0]
+            else:
+                if len(np.where(rewards == -1)[0]) > 0:
+                    convergence_time = 10 * env_config['T']
+                else:
+                    convergence_time = env_config['T']
+
+            epoch_rewards.append(convergence_time)
 
         return dict(
             epoch_reward_min=np.min(epoch_rewards),
