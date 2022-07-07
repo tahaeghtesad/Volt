@@ -17,7 +17,7 @@ def get_rewards(states, rewards):
     ret = ret.write(0, rewards[0])
 
     for t in range(1, len(states)):
-        if rewards[t] < -1:
+        if rewards[t] <= -1:
             ret = ret.write(t, -1)
         elif tf.reduce_all(tf.abs(voltages[t] - 1) < env_config['voltage_threshold'] * 1.023) and \
                 tf.reduce_all(tf.abs(reactive_powers[t:t+env_config['window_size'], :] - reactive_powers[t, :]) < env_config['change_threshold']):
