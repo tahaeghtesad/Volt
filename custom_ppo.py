@@ -134,7 +134,7 @@ def train(epoch, optimizer, actor, critic, trajectories,
     old_distributions = [get_distribution(actor(t['states'])) for t in trajectories]
     old_probs = [old_distributions[t].prob(trajectories[t]['actions']) for t in range(len(trajectories))]
 
-    for it, trajectory, old_distribution, old_prob in enumerate(zip(trajectories, old_distributions, old_probs)):
+    for it, (trajectory, old_distribution, old_prob) in enumerate(zip(trajectories, old_distributions, old_probs)):
         it_log = epoch * len(trajectories) + it
 
         with tf.GradientTape() as actor_tape, tf.GradientTape() as critic_tape:
