@@ -139,7 +139,7 @@ if __name__ == '__main__':
         stop={
             'training_iteration': 1,
         },
-        num_samples=128,
+        num_samples=512,
         reuse_actors=True,
         verbose=Verbosity.V3_TRIAL_DETAILS
     )
