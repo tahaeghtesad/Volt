@@ -52,9 +52,9 @@ def get_single_trajectory(env, actor):
 
         scaled_action = tf.sigmoid(action) * (env.action_space.high - env.action_space.low) + env.action_space.low
 
-        # action = tf.constant([-2, 1.2, 1.4, -1.7])
+        # action = tf.constant([alpha, beta, gamma, c])
         # scaled_action = action
-        # prob = tf.constant(1.0)
+        # # prob = tf.constant(1.0)
 
         new_obs, reward, done, info = env.step(scaled_action)
 
@@ -70,7 +70,7 @@ def get_single_trajectory(env, actor):
     rewards = get_rewards(np.array(states), np.array(rewards))
     convergence_time = np.where(rewards == 1)[0]
     if len(convergence_time) > 0:
-        convergence_time = convergence_time[0]
+        convergence_time = convergence_time[0] + 1
         print(f'Converged at step {convergence_time}')
     else:
         convergence_time = None
