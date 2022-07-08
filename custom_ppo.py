@@ -156,7 +156,7 @@ def train(epoch, optimizer, actor, critic, trajectories,
             l_kl = beta * tf.reduce_mean(kl)
             l_entropy = - c_2 * tf.reduce_mean(entropy)
 
-            surrogate = - l_kl + l_clip + l_entropy - l_crit
+            surrogate = l_kl + l_clip + l_entropy + l_crit
 
         critic_grads = critic_tape.gradient(l_crit, critic.trainable_variables)
         optimizer.apply_gradients(zip(critic_grads, critic.trainable_variables))

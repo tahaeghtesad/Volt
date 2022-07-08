@@ -6,7 +6,7 @@ env_config = {
     'load_var': 1.0,  # can be floating point (between 0.8 and 1.2) or 'dynamic'
     'voltage_threshold': 0.05,  # ([0.95, 1.05])
     'range': {  # alpha, beta, gamma, c, respectively
-        'low': [-3, -2, 0, -1],
+        'low': [-6, -2, 0, -1],
         'high': [-1, 3, 4, 3]
         # 'low': [-3, -3, -3, -3],
         # 'high': [3, 3, 3, 3]
@@ -16,7 +16,7 @@ env_config = {
     # Length of history
     'history_size': 1,
     # Episode length
-    'T': 1200,
+    'T': 2000,
     'repeat': 1,
     'epochs': 1,  # for optimizer.py to average the episode reward over n epochs
     'window_size': 600,
