@@ -215,7 +215,7 @@ def main(numcpus):
     critic.summary()
     actor.summary()
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)  # this should depend on the number of training epochs.
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # this should depend on the number of training epochs.
 
     with ThreadPool(processes=numcpus) as tp:
 
