@@ -9,23 +9,7 @@ from tqdm import tqdm
 
 from envs.remote.client import RemoteEnv
 from config import env_config
-
-
-def get_rewards(states, rewards):
-    voltages, reactive_powers = tf.split(states, 2, axis=1)
-    ret = tf.TensorArray(tf.float32, size=states.shape[0])
-    ret = ret.write(0, rewards[0])
-
-    for t in range(1, len(states)):
-        if rewards[t] <= -1:
-            ret = ret.write(t, -1)
-        elif tf.reduce_all(tf.abs(voltages[t] - 1) < env_config['voltage_threshold'] * 1.023) and \
-                tf.reduce_all(tf.abs(reactive_powers[t:t+env_config['window_size'], :] - reactive_powers[t, :]) < env_config['change_threshold']):
-            ret = ret.write(t, 1)
-        else:
-            ret = ret.write(t, 0)
-
-    return ret.stack()
+from util.env_util import get_rewards
 
 
 def get_single_trajectory(env, actor):
@@ -67,7 +51,7 @@ def get_single_trajectory(env, actor):
 
         observation = new_obs
 
-    rewards = get_rewards(np.array(states), np.array(rewards))
+    rewards = get_rewards(env_config, np.array(states), np.array(rewards))
     convergence_time = np.where(rewards == 1)[0]
     if len(convergence_time) > 0:
         convergence_time = convergence_time[0] + 1
