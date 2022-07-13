@@ -221,7 +221,7 @@ def train(epoch, optimizer, actor, target_actor, critic, target_critic, samples,
 
     tf.summary.scalar('ddpg/state_val', data=tf.reduce_mean(critic_value), step=epoch)
     tf.summary.scalar('ddpg/critic_loss', data=critic_loss, step=epoch)
-    tf.summary.scalar('ppo/actor_loss', data=actor_loss, step=epoch)
+    tf.summary.scalar('ddpg/actor_loss', data=actor_loss, step=epoch)
 
 
 def update_target(target_weights, weights, tau):
