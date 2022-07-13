@@ -192,7 +192,7 @@ def create_actor(env: gym.Env):
 def train(epoch, optimizer, actor, target_actor, critic, target_critic, samples,
           gamma: float, tau: float):
 
-    with tf.GradientTape() as actor_tape, tf.GradientTape() as critic_tape:
+    with tf.GradientTape() as critic_tape:
         target_actions = target_actor(samples['next_states'])
         y = samples['rewards'] + gamma * target_critic(
             [samples['next_states'], target_actions], training=True
@@ -200,16 +200,17 @@ def train(epoch, optimizer, actor, target_actor, critic, target_critic, samples,
         critic_value = critic([samples['states'], samples['actions']], training=True)
         critic_loss = tf.math.reduce_mean(tf.math.square(y - critic_value))
 
+    critic_grad = critic_tape.gradient(critic_loss, critic.trainable_variables)
+    optimizer.apply_gradients(
+        zip(critic_grad, critic.trainable_variables)
+    )
+
+    with tf.GradientTape() as actor_tape:
         actions = actor(samples['states'], training=True)
         critic_value = critic([samples['states'], actions], training=True)
         # Used `-value` as we want to maximize the value given
         # by the critic for our actions
         actor_loss = -tf.math.reduce_mean(critic_value)
-
-    critic_grad = critic_tape.gradient(critic_loss, critic.trainable_variables)
-    optimizer.apply_gradients(
-        zip(critic_grad, critic.trainable_variables)
-    )
 
     actor_grad = actor_tape.gradient(actor_loss, actor.trainable_variables)
     optimizer.apply_gradients(
