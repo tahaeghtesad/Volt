@@ -60,12 +60,12 @@ def get_single_trajectory(env, actor):
         convergence_time = None
 
     return dict(
-        states=np.array(states)[:convergence_time],
-        actions=np.array(actions)[:convergence_time],
-        scaled_actions=np.array(scaled_actions)[:convergence_time],
-        rewards=rewards[:convergence_time],
-        next_states=np.array(next_states)[:convergence_time],
-        dones=np.array(dones)[:convergence_time],
+        states=np.array(states, dtype=np.float32)[:convergence_time],
+        actions=np.array(actions, dtype=np.float32)[:convergence_time],
+        scaled_actions=np.array(scaled_actions, dtype=np.float32)[:convergence_time],
+        rewards=np.array(rewards[:convergence_time], dtype=np.float32),
+        next_states=np.array(next_states, dtype=np.float32)[:convergence_time],
+        dones=np.array(dones, dtype=np.float32)[:convergence_time],
     )
 
 
@@ -106,7 +106,7 @@ def calculate_gae(rewards, state_vals, next_state_vals, dones, gamma, lam):
     Calculate the advantage function.
     """
     gae = 0
-    gae_list = tf.TensorArray(tf.float32, size=rewards.shape[0])
+    gae_list = tf.TensorArray(rewards.dtype, size=rewards.shape[0])
     for i in reversed(range(len(rewards))):
         delta = rewards[i] + gamma * next_state_vals[i] * (1 - dones[i]) - state_vals[i]
         gae = delta + gamma * lam * (1 - dones[i]) * gae
@@ -211,7 +211,7 @@ def main(numcpus):
 
 if __name__ == '__main__':
 
-    logdir = "logs/tb_logs" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    logdir = "logs/tb_logs/ppo/" + datetime.now().strftime("%Y%m%d-%H%M%S")
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 

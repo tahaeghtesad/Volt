@@ -36,7 +36,7 @@ class Historitized(gym.Env):
 
 def get_rewards(env_config, states, rewards):
     voltages, reactive_powers = tf.split(states, 2, axis=1)
-    ret = tf.TensorArray(tf.float32, size=states.shape[0])
+    ret = tf.TensorArray(voltages.dtype, size=states.shape[0])
     ret = ret.write(0, rewards[0])
 
     for t in range(1, len(states)):
@@ -47,7 +47,7 @@ def get_rewards(env_config, states, rewards):
             ret = ret.write(t, 1)
         else:
             voltage_deviation = tf.reduce_mean(tf.abs(voltages[t] - 1) - env_config['voltage_threshold'])
-            reactive_power_deviation = tf.reduce_mean(tf.clip_by_value(tf.abs(reactive_powers[t:t+env_config['window_size'], :] - reactive_powers[t, :]) - env_config['change_threshold'], 0.0, None))
+            reactive_power_deviation = tf.reduce_mean(tf.clip_by_value(tf.abs(reactive_powers[t:t+env_config['window_size'], :] - reactive_powers[t, :]) - env_config['change_threshold'], 0.0, voltages.dtype.max))
             reward = (tf.exp(-voltage_deviation) + tf.exp(-reactive_power_deviation) - 2) * env_config['gamma']
             ret = ret.write(t, reward)
 
