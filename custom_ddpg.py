@@ -244,7 +244,7 @@ def main(numcpus):
     actor.summary()
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # this should depend on the number of training epochs.
-    buffer = ExperienceReplayBuffer(buffer_size=10000, sample_size=64)
+    buffer = ExperienceReplayBuffer(buffer_size=50000, sample_size=128)
 
     with ThreadPool(processes=numcpus) as tp:
 
