@@ -51,7 +51,7 @@ def get_single_trajectory(env, actor):
 
         observation = new_obs
 
-    rewards = get_rewards(env_config, np.array(states), np.array(rewards))
+    rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
     convergence_time = np.where(rewards == 1)[0]
     if len(convergence_time) > 0:
         convergence_time = convergence_time[0] + 1

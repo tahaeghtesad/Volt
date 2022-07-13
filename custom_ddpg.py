@@ -44,7 +44,7 @@ def get_single_trajectory(env, actor):
 
         observation = new_obs
 
-    rewards = get_rewards(env_config, np.array(states), np.array(rewards))
+    rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
     convergence_time = np.where(rewards == 1)[0]
     if len(convergence_time) > 0:
         convergence_time = convergence_time[0] + 1
@@ -162,7 +162,7 @@ def create_critic(env: gym.Env):
 
     out = tf.keras.layers.Dense(256, activation="relu")(concat)
     out = tf.keras.layers.Dense(256, activation="relu")(out)
-    outputs = tf.keras.layers.Dense(1)(out)
+    outputs = tf.keras.layers.Dense(1, activation='linear')(out)
 
     # Outputs single value for give state-action
     model = tf.keras.Model([state_input, action_input], outputs, name="critic")
