@@ -280,4 +280,4 @@ if __name__ == '__main__':
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(logdir, 8)
+    main(logdir, 4)
