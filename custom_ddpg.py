@@ -248,7 +248,7 @@ def main(numcpus):
 
     with ThreadPool(processes=numcpus) as tp:
 
-        for epoch in tqdm(range(1000)):
+        for epoch in tqdm(range(10000)):
             trajectories = tp.starmap(get_single_trajectory, [(env, target_actor) for env in envs])
             for t in trajectories:
                 buffer.add(t)
