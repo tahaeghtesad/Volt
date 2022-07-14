@@ -230,7 +230,7 @@ def update_target(target_weights, weights, tau):
         a.assign(b * tau + a * (1 - tau))
 
 
-def main(numcpus):
+def main(logdir, numcpus):
 
     with ThreadPool(numcpus) as pool:
         envs = pool.starmap(RemoteEnv, [('localhost', 6985, env_config) for _ in range(numcpus)])
@@ -256,11 +256,14 @@ def main(numcpus):
             if len(buffer.buffer) > buffer.sample_size:
                 train(epoch, optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=0.99, tau=0.001)
 
+    target_actor.save(logdir + '/actor.h5')
+    target_critic.save(logdir + '/critic.h5')
+
 
 if __name__ == '__main__':
 
-    logdir = "logs/tb_logs/ddpg/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+    logdir = "logs/ddpg/" + datetime.now().strftime("%Y%m%d-%H%M%S")
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(8)
+    main(logdir, 8)

@@ -188,7 +188,7 @@ def get_distribution(action_logits):
     return distribution
 
 
-def main(numcpus):
+def main(logdir, numcpus):
 
     with ThreadPool(numcpus) as pool:
         envs = pool.starmap(RemoteEnv, [('localhost', 6985, env_config) for _ in range(numcpus)])
@@ -208,6 +208,9 @@ def main(numcpus):
             train(epoch, optimizer, actor, critic, trajectories, gamma=0.99, lam=1, epsilon=0.3, beta=0.02, c_1=0.1,
                   c_2=0.0001)  # c_1 critic, c_2 entropy
 
+    actor.save(logdir + '/actor.h5')
+    critic.save(logdir + '/critic.h5')
+
 
 if __name__ == '__main__':
 
@@ -215,4 +218,4 @@ if __name__ == '__main__':
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(8)
+    main(logdir, 8)
