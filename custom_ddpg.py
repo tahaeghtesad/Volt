@@ -248,7 +248,7 @@ def main(logdir, numcpus):
 
     with ThreadPool(processes=numcpus) as tp:
 
-        for epoch in tqdm(range(10)):
+        for epoch in tqdm(range(10000)):
             trajectories = tp.starmap(get_single_trajectory, [(env, target_actor) for env in envs])
             for t in trajectories:
                 buffer.add(t)
@@ -280,4 +280,4 @@ if __name__ == '__main__':
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(logdir, 1)
+    main(logdir, 8)
