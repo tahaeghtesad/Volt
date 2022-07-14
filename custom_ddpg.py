@@ -248,10 +248,24 @@ def main(logdir, numcpus):
 
     with ThreadPool(processes=numcpus) as tp:
 
-        for epoch in tqdm(range(10000)):
+        for epoch in tqdm(range(10)):
             trajectories = tp.starmap(get_single_trajectory, [(env, target_actor) for env in envs])
             for t in trajectories:
                 buffer.add(t)
+
+            tf.summary.scalar('env/return', data=tf.reduce_mean(tf.reduce_sum([t['rewards'] for t in trajectories])), step=epoch)
+            tf.summary.scalar('env/length', data=tf.reduce_mean(tf.reduce_sum([len(t['states']) for t in trajectories])), step=epoch)
+
+            tf.summary.scalar('power_grid/alpha', data=tf.reduce_mean([[a[0] for a in t['scaled_actions']] for t in trajectories]), step=epoch)
+            tf.summary.scalar('power_grid/beta', data=tf.reduce_mean([[a[1] for a in t['scaled_actions']] for t in trajectories]), step=epoch)
+            tf.summary.scalar('power_grid/gamma', data=tf.reduce_mean([[a[2] for a in t['scaled_actions']] for t in trajectories]), step=epoch)
+            tf.summary.scalar('power_grid/c', data=tf.reduce_mean([[a[3] for a in t['scaled_actions']] for t in trajectories]), step=epoch)
+
+            tf.summary.scalar('trajectories/min_volt', data=tf.reduce_min([[tf.split(a, 2)[0] for a in t['states']] for t in trajectories]), step=epoch)
+            tf.summary.scalar('trajectories/max_volt', data=tf.reduce_max([[tf.split(a, 2)[0] for a in t['states']] for t in trajectories]), step=epoch)
+
+            tf.summary.scalar('trajectories/min_reactive', data=tf.reduce_min([[tf.split(a, 2)[1] for a in t['states']] for t in trajectories]), step=epoch)
+            tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([[tf.split(a, 2)[1] for a in t['states']] for t in trajectories]), step=epoch)
 
             if len(buffer.buffer) > buffer.sample_size:
                 train(epoch, optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=0.99, tau=0.001)
@@ -266,4 +280,4 @@ if __name__ == '__main__':
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(logdir, 8)
+    main(logdir, 1)
