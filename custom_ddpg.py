@@ -194,7 +194,7 @@ def create_actor(env: gym.Env):
     return model
 
 
-def train(epoch, optimizer, actor, target_actor, critic, target_critic, samples,
+def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, samples,
           gamma: float, tau: float):
 
     with tf.GradientTape() as critic_tape:
@@ -206,19 +206,17 @@ def train(epoch, optimizer, actor, target_actor, critic, target_critic, samples,
         critic_loss = tf.math.reduce_mean(tf.math.square(y - critic_value))
 
     critic_grad = critic_tape.gradient(critic_loss, critic.trainable_variables)
-    optimizer.apply_gradients(
+    critic_optimizer.apply_gradients(
         zip(critic_grad, critic.trainable_variables)
     )
 
     with tf.GradientTape() as actor_tape:
         actions = actor(samples['states'], training=True)
         critic_value = critic([samples['states'], actions], training=True)
-        # Used `-value` as we want to maximize the value given
-        # by the critic for our actions
         actor_loss = -tf.math.reduce_mean(critic_value)
 
     actor_grad = actor_tape.gradient(actor_loss, actor.trainable_variables)
-    optimizer.apply_gradients(
+    actor_optimizer.apply_gradients(
         zip(actor_grad, actor.trainable_variables)
     )
 
@@ -248,7 +246,9 @@ def main(logdir, numcpus):
     critic.summary()
     actor.summary()
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # this should depend on the number of training epochs.
+    actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.002)
+
     buffer = ExperienceReplayBuffer(buffer_size=50000, sample_size=128)
 
     with ThreadPool(processes=numcpus) as tp:
@@ -273,7 +273,7 @@ def main(logdir, numcpus):
             tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
 
             if len(buffer.buffer) > buffer.sample_size:
-                train(epoch, optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=0.99, tau=0.001)
+                train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=0.99, tau=0.001)
 
     target_actor.save(logdir + '/actor.h5')
     target_critic.save(logdir + '/critic.h5')
@@ -285,4 +285,4 @@ if __name__ == '__main__':
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(logdir, 4)
+    main(logdir, 12)
