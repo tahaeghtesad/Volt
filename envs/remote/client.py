@@ -43,9 +43,9 @@ class RemoteEnv(gym.Env):
         self.step_number = 0
         self.epoch_number += 1
 
-        # if self.epoch_number % 500 == 0:
-        #     self.messenger.conn.close()
-        #     self.__init_messenger()
+        if self.epoch_number % 500 == 0:
+            self.messenger.conn.close()
+            self.__init_messenger()
 
         self.messenger.send_message(dict(event='reset'))
 
