@@ -19,7 +19,7 @@ env_config = {
     'T': 1000,
     'repeat': 1,
     'epochs': 32,  # for optimizer.py to average the episode reward over n epochs
-    'window_size': 1000,
+    'window_size': 500,
     'change_threshold': 0.05,
     'gamma': gamma,
 }

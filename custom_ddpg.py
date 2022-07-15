@@ -27,7 +27,7 @@ def get_single_trajectory(env, actor):
     dones = []
 
     observation = env.reset()
-    noise = OUActionNoise(mean=np.zeros(env.action_space.low.shape[0]), std_deviation=0.1 * np.ones(env.action_space.low.shape[0]))
+    noise = OUActionNoise(mean=np.zeros(env.action_space.low.shape[0]), std_deviation=0.3 * np.ones(env.action_space.low.shape[0]))
     done = False
 
     while not done:
@@ -237,8 +237,13 @@ def main(logdir, numcpus):
 
     critic = create_critic(envs[0])
     target_critic = create_critic(envs[0])
+    for (a, b) in zip(target_critic.weights, critic.weights):
+        a.assign(b)
+
     actor = create_actor(envs[0])
     target_actor = create_actor(envs[0])
+    for (a, b) in zip(target_actor.weights, actor.weights):
+        a.assign(b)
 
     critic.summary()
     actor.summary()
@@ -258,6 +263,7 @@ def main(logdir, numcpus):
             tf.summary.scalar('env/return', data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
             tf.summary.scalar('env/length', data=tf.reduce_mean([len(t['states']) for t in trajectories]), step=epoch)
 
+            # TODO make it max and mean and average?
             tf.summary.scalar('power_grid/alpha', data=tf.reduce_mean([tf.reduce_mean([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
             tf.summary.scalar('power_grid/beta', data=tf.reduce_mean([tf.reduce_mean([a[1] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
             tf.summary.scalar('power_grid/gamma', data=tf.reduce_mean([tf.reduce_mean([a[2] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
@@ -270,8 +276,8 @@ def main(logdir, numcpus):
             tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
 
             if len(buffer.buffer) > buffer.sample_size:
-                for _ in range(numcpus):
-                    train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=env_config['gamma'], tau=0.001)
+                for _ in range(max(1, int(tf.reduce_sum([len(t['states']) for t in trajectories]) / buffer.sample_size * 8))):
+                    train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=env_config['gamma'], tau=0.01)
 
     target_actor.save(logdir + '/actor.h5')
     target_critic.save(logdir + '/critic.h5')
