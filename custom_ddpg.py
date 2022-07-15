@@ -1,6 +1,7 @@
 import threading
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
+import random
 
 import gym
 import numpy as np
@@ -26,11 +27,15 @@ def get_single_trajectory(env, actor):
     dones = []
 
     observation = env.reset()
-    noise = OUActionNoise(np.zeros(env.action_space.low.shape[0]), std_deviation=0.1 * np.ones(env.action_space.low.shape[0]))
+    noise = OUActionNoise(mean=np.zeros(env.action_space.low.shape[0]), std_deviation=0.1 * np.ones(env.action_space.low.shape[0]))
     done = False
 
     while not done:
-        action = actor(np.array([observation]))[0] + noise()
+        if random.random() < 0.05:
+            action = env.action_space.sample()
+        else:
+            action = actor(np.array([observation]))[0] + noise()
+
         scaled_action = tf.sigmoid(action) * (env.action_space.high - env.action_space.low) + env.action_space.low
 
         new_obs, reward, done, info = env.step(scaled_action)
