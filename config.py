@@ -1,4 +1,4 @@
-gamma = 0.99
+gamma = 0.90
 
 env_config = {
     'system': 'ieee13',

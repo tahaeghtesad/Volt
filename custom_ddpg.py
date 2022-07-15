@@ -31,11 +31,7 @@ def get_single_trajectory(env, actor):
     done = False
 
     while not done:
-        if random.random() < 0.05:
-            action = env.action_space.sample()
-        else:
-            action = actor(np.array([observation]))[0] + noise()
-
+        action = actor(np.array([observation]))[0] + noise()
         scaled_action = tf.sigmoid(action) * (env.action_space.high - env.action_space.low) + env.action_space.low
 
         new_obs, reward, done, info = env.step(scaled_action)
@@ -197,11 +193,12 @@ def create_actor(env: gym.Env):
 def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, samples,
           gamma: float, tau: float):
 
+    target_actions = target_actor(samples['next_states'], training=False)
+    y = samples['rewards'] + gamma * target_critic(
+        [samples['next_states'], target_actions], training=False
+    )
+
     with tf.GradientTape() as critic_tape:
-        target_actions = target_actor(samples['next_states'])
-        y = samples['rewards'] + gamma * target_critic(
-            [samples['next_states'], target_actions], training=True
-        )
         critic_value = critic([samples['states'], samples['actions']], training=True)
         critic_loss = tf.math.reduce_mean(tf.math.square(y - critic_value))
 
@@ -212,7 +209,7 @@ def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic,
 
     with tf.GradientTape() as actor_tape:
         actions = actor(samples['states'], training=True)
-        critic_value = critic([samples['states'], actions], training=True)
+        critic_value = critic([samples['states'], actions], training=False)
         actor_loss = -tf.math.reduce_mean(critic_value)
 
     actor_grad = actor_tape.gradient(actor_loss, actor.trainable_variables)
@@ -230,7 +227,7 @@ def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic,
 
 def update_target(target_weights, weights, tau):
     for (a, b) in zip(target_weights, weights):
-        a.assign(b * tau + a * (1 - tau))
+        a.assign(a * (1 - tau) + b * tau)
 
 
 def main(logdir, numcpus):
@@ -249,7 +246,7 @@ def main(logdir, numcpus):
     actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.002)
 
-    buffer = ExperienceReplayBuffer(buffer_size=50000, sample_size=128)
+    buffer = ExperienceReplayBuffer(buffer_size=5000, sample_size=128)
 
     with ThreadPool(processes=numcpus) as tp:
 
@@ -273,7 +270,8 @@ def main(logdir, numcpus):
             tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
 
             if len(buffer.buffer) > buffer.sample_size:
-                train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=0.99, tau=0.001)
+                for _ in range(numcpus):
+                    train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=env_config['gamma'], tau=0.001)
 
     target_actor.save(logdir + '/actor.h5')
     target_critic.save(logdir + '/critic.h5')
