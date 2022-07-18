@@ -43,10 +43,11 @@ def get_single_trajectory(env, actor):
 
         observation = new_obs
 
-    rewards = get_rewards(env_config, tf.convert_to_tensor(states), tf.convert_to_tensor(rewards), dones)
-    convergence_time = tf.where(rewards == 1)[0]
+    rewards = get_rewards(env_config, tf.convert_to_tensor(states, dtype=tf.float32), tf.convert_to_tensor(rewards, dtype=tf.float32), dones)
+
+    convergence_time = tf.where(rewards == 1)
     if len(convergence_time) > 0:
-        convergence_time = convergence_time[0] + 1
+        convergence_time = convergence_time[0][0] + 1
         print(f'Converged at step {convergence_time}')
     else:
         convergence_time = None
@@ -55,9 +56,9 @@ def get_single_trajectory(env, actor):
         states=tf.convert_to_tensor(states, dtype=tf.float32)[:convergence_time],
         actions=tf.convert_to_tensor(actions, dtype=tf.float32)[:convergence_time],
         scaled_actions=tf.convert_to_tensor(scaled_actions, dtype=tf.float32)[:convergence_time],
-        rewards=tf.convert_to_tensor(rewards[:convergence_time], dtype=tf.float32),
+        rewards=rewards[:convergence_time],
         next_states=tf.convert_to_tensor(next_states, dtype=tf.float32)[:convergence_time],
-        dones=tf.convert_to_tensor(dones, dtype=tf.float32)[:convergence_time],
+        dones=tf.cast(tf.convert_to_tensor(dones), dtype=tf.float32)[:convergence_time],
     )
 
 
@@ -122,7 +123,7 @@ class ExperienceReplayBuffer:
             self.buffer.extend(converted)
 
     def sample(self):
-        indices = random.choices(self.buffer, k=self.sample_size)
+        experiences = random.choices(self.buffer, k=self.sample_size)
         ret = dict(
             states=[],
             actions=[],
@@ -132,15 +133,15 @@ class ExperienceReplayBuffer:
             dones=[],
         )
 
-        for i in indices:
-            ret['states'].append(self.buffer[i]['state'])
-            ret['actions'].append(self.buffer[i]['action'])
-            ret['scaled_actions'].append(self.buffer[i]['scaled_action'])
-            ret['rewards'].append(self.buffer[i]['reward'])
-            ret['next_states'].append(self.buffer[i]['next_state'])
-            ret['dones'].append(self.buffer[i]['done'])
+        for e in experiences:
+            ret['states'].append(e['state'])
+            ret['actions'].append(e['action'])
+            ret['scaled_actions'].append(e['scaled_action'])
+            ret['rewards'].append(e['reward'])
+            ret['next_states'].append(e['next_state'])
+            ret['dones'].append(e['done'])
 
-        return {k: tf.convert_to_tensor(v) for k, v in ret.items()}
+        return {k: tf.convert_to_tensor(v, dtype=tf.float32) for k, v in ret.items()}
 
 
 def create_critic(env: gym.Env):
@@ -249,7 +250,7 @@ def main(logdir, numcpus):
     actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.002)
 
-    buffer = ExperienceReplayBuffer(buffer_size=5000, sample_size=128)
+    buffer = ExperienceReplayBuffer(buffer_size=50000, sample_size=128)
 
     with ThreadPool(processes=numcpus) as tp:
 
