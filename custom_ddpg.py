@@ -263,11 +263,33 @@ def main(logdir, numcpus):
                 tf.summary.scalar('env/return', data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
                 tf.summary.scalar('env/length', data=tf.reduce_mean([len(t['states']) for t in trajectories]), step=epoch)
 
-                # TODO make it max and mean and average?
-                tf.summary.scalar('power_grid/alpha', data=tf.reduce_mean([tf.reduce_mean([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-                tf.summary.scalar('power_grid/beta', data=tf.reduce_mean([tf.reduce_mean([a[1] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-                tf.summary.scalar('power_grid/gamma', data=tf.reduce_mean([tf.reduce_mean([a[2] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-                tf.summary.scalar('power_grid/c', data=tf.reduce_mean([tf.reduce_mean([a[3] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/alpha', data=tf.reduce_min(
+                    [tf.reduce_min([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/alpha', data=tf.reduce_max(
+                    [tf.reduce_max([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/alpha', data=tf.reduce_mean(
+                    [tf.reduce_mean([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+
+                tf.summary.scalar('power_grid/beta', data=tf.reduce_min(
+                    [tf.reduce_min([a[1] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/beta', data=tf.reduce_max(
+                    [tf.reduce_max([a[1] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/beta', data=tf.reduce_mean(
+                    [tf.reduce_mean([a[1] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+
+                tf.summary.scalar('power_grid/gamma', data=tf.reduce_min(
+                    [tf.reduce_min([a[2] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/gamma', data=tf.reduce_max(
+                    [tf.reduce_max([a[2] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/gamma', data=tf.reduce_mean(
+                    [tf.reduce_mean([a[2] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+
+                tf.summary.scalar('power_grid/c', data=tf.reduce_min(
+                    [tf.reduce_min([a[3] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/c', data=tf.reduce_max(
+                    [tf.reduce_max([a[3] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/c', data=tf.reduce_mean(
+                    [tf.reduce_mean([a[3] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
 
                 tf.summary.scalar('trajectories/min_volt', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
                 tf.summary.scalar('trajectories/max_volt', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
