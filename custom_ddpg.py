@@ -316,4 +316,12 @@ if __name__ == '__main__':
     file_writer = tf.summary.create_file_writer(logdir + "/metrics")
     file_writer.set_as_default()
 
-    main(logdir, 12)
+    try:
+        gpus = tf.config.experimental.list_physical_devices('GPU')
+        if gpus:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+
+        main(logdir, 12)
+    except RuntimeError as e:
+        print(f'Failed to set GPU growth: {e}')
