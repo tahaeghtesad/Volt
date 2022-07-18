@@ -304,8 +304,10 @@ def main(logdir, numcpus):
         except KeyboardInterrupt:
             pass
 
+    print('Saving actor and critic weights...')
     target_actor.save(logdir + '/actor.h5')
     target_critic.save(logdir + '/critic.h5')
+    print(f'Actor and Critic Saved to {logdir}')
 
 
 if __name__ == '__main__':
