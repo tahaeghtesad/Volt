@@ -231,6 +231,8 @@ def update_target(target_weights, weights, tau):
 
 def main(logdir, numcpus):
 
+    print(f'Starting thraining with {numcpus} cpus. Logging to {logdir}')
+
     with ThreadPool(numcpus) as pool:
         envs = pool.starmap(RemoteEnv, [('localhost', 6985, env_config) for _ in range(numcpus)])
 

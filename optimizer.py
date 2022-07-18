@@ -104,7 +104,7 @@ search_space = {
 }
 
 if __name__ == '__main__':
-    ray.init(num_cpus=8)
+    ray.init(num_cpus=16)
     pd.set_option("display.precision", 16)
     env_config.update()
     analysis = tune.run(
