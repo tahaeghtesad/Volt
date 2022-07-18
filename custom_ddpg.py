@@ -1,16 +1,14 @@
+import random
 import threading
 from datetime import datetime
 from multiprocessing.pool import ThreadPool
-import random
 
 import gym
-import numpy as np
 import tensorflow as tf
-import tensorflow_probability as tfp
 from tqdm import tqdm
 
-from envs.remote.client import RemoteEnv
 from config import env_config
+from envs.remote.client import RemoteEnv
 from util.env_util import get_rewards
 
 
@@ -27,11 +25,11 @@ def get_single_trajectory(env, actor):
     dones = []
 
     observation = env.reset()
-    noise = OUActionNoise(mean=np.zeros(env.action_space.low.shape[0]), std_deviation=0.3 * np.ones(env.action_space.low.shape[0]))
+    noise = OUActionNoise(mean=tf.zeros(env.action_space.low.shape[0]), std_deviation=0.3 * tf.ones(env.action_space.low.shape[0]))
     done = False
 
     while not done:
-        action = actor(np.array([observation]))[0] + noise()
+        action = actor(tf.convert_to_tensor([observation]))[0] + noise()
         scaled_action = tf.sigmoid(action) * (env.action_space.high - env.action_space.low) + env.action_space.low
 
         new_obs, reward, done, info = env.step(scaled_action)
@@ -45,8 +43,8 @@ def get_single_trajectory(env, actor):
 
         observation = new_obs
 
-    rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
-    convergence_time = np.where(rewards == 1)[0]
+    rewards = get_rewards(env_config, tf.convert_to_tensor(states), tf.convert_to_tensor(rewards), dones)
+    convergence_time = tf.where(rewards == 1)[0]
     if len(convergence_time) > 0:
         convergence_time = convergence_time[0] + 1
         print(f'Converged at step {convergence_time}')
@@ -54,12 +52,12 @@ def get_single_trajectory(env, actor):
         convergence_time = None
 
     return dict(
-        states=np.array(states, dtype=np.float32)[:convergence_time],
-        actions=np.array(actions, dtype=np.float32)[:convergence_time],
-        scaled_actions=np.array(scaled_actions, dtype=np.float32)[:convergence_time],
-        rewards=np.array(rewards[:convergence_time], dtype=np.float32),
-        next_states=np.array(next_states, dtype=np.float32)[:convergence_time],
-        dones=np.array(dones, dtype=np.float32)[:convergence_time],
+        states=tf.convert_to_tensor(states, dtype=tf.float32)[:convergence_time],
+        actions=tf.convert_to_tensor(actions, dtype=tf.float32)[:convergence_time],
+        scaled_actions=tf.convert_to_tensor(scaled_actions, dtype=tf.float32)[:convergence_time],
+        rewards=tf.convert_to_tensor(rewards[:convergence_time], dtype=tf.float32),
+        next_states=tf.convert_to_tensor(next_states, dtype=tf.float32)[:convergence_time],
+        dones=tf.convert_to_tensor(dones, dtype=tf.float32)[:convergence_time],
     )
 
 
@@ -78,7 +76,7 @@ class OUActionNoise:
         x = (
             self.x_prev
             + self.theta * (self.mean - self.x_prev) * self.dt
-            + self.std_dev * np.sqrt(self.dt) * np.random.normal(size=self.mean.shape)
+            + self.std_dev * tf.math.sqrt(self.dt) * tf.random.normal(size=self.mean.shape)
         )
         # Store x into x_prev
         # Makes next noise dependent on current one
@@ -89,7 +87,7 @@ class OUActionNoise:
         if self.x_initial is not None:
             self.x_prev = self.x_initial
         else:
-            self.x_prev = np.zeros_like(self.mean)
+            self.x_prev = tf.zeros_like(self.mean)
 
 
 class ExperienceReplayBuffer:
@@ -124,7 +122,7 @@ class ExperienceReplayBuffer:
             self.buffer.extend(converted)
 
     def sample(self):
-        indices = np.random.choice(len(self.buffer), self.sample_size, replace=False)
+        indices = random.choices(self.buffer, k=self.sample_size)
         ret = dict(
             states=[],
             actions=[],
@@ -142,7 +140,7 @@ class ExperienceReplayBuffer:
             ret['next_states'].append(self.buffer[i]['next_state'])
             ret['dones'].append(self.buffer[i]['done'])
 
-        return {k: np.array(v) for k, v in ret.items()}
+        return {k: tf.convert_to_tensor(v) for k, v in ret.items()}
 
 
 def create_critic(env: gym.Env):
@@ -255,29 +253,33 @@ def main(logdir, numcpus):
 
     with ThreadPool(processes=numcpus) as tp:
 
-        for epoch in tqdm(range(10000)):
-            trajectories = tp.starmap(get_single_trajectory, [(env, target_actor) for env in envs])
-            for t in trajectories:
-                buffer.add(t)
+        try:
 
-            tf.summary.scalar('env/return', data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
-            tf.summary.scalar('env/length', data=tf.reduce_mean([len(t['states']) for t in trajectories]), step=epoch)
+            for epoch in tqdm(range(10000)):
+                trajectories = tp.starmap(get_single_trajectory, [(env, target_actor) for env in envs])
+                for t in trajectories:
+                    buffer.add(t)
 
-            # TODO make it max and mean and average?
-            tf.summary.scalar('power_grid/alpha', data=tf.reduce_mean([tf.reduce_mean([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-            tf.summary.scalar('power_grid/beta', data=tf.reduce_mean([tf.reduce_mean([a[1] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-            tf.summary.scalar('power_grid/gamma', data=tf.reduce_mean([tf.reduce_mean([a[2] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-            tf.summary.scalar('power_grid/c', data=tf.reduce_mean([tf.reduce_mean([a[3] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('env/return', data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
+                tf.summary.scalar('env/length', data=tf.reduce_mean([len(t['states']) for t in trajectories]), step=epoch)
 
-            tf.summary.scalar('trajectories/min_volt', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
-            tf.summary.scalar('trajectories/max_volt', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
+                # TODO make it max and mean and average?
+                tf.summary.scalar('power_grid/alpha', data=tf.reduce_mean([tf.reduce_mean([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/beta', data=tf.reduce_mean([tf.reduce_mean([a[1] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/gamma', data=tf.reduce_mean([tf.reduce_mean([a[2] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('power_grid/c', data=tf.reduce_mean([tf.reduce_mean([a[3] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
 
-            tf.summary.scalar('trajectories/min_reactive', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
-            tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('trajectories/min_volt', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('trajectories/max_volt', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
 
-            if len(buffer.buffer) > buffer.sample_size:
-                for _ in range(max(1, int(tf.reduce_sum([len(t['states']) for t in trajectories]) / buffer.sample_size * 8))):
-                    train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=env_config['gamma'], tau=0.01)
+                tf.summary.scalar('trajectories/min_reactive', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
+
+                if len(buffer.buffer) > buffer.sample_size:
+                    for _ in range(max(1, int(tf.reduce_sum([len(t['states']) for t in trajectories]) / buffer.sample_size * 8))):
+                        train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=env_config['gamma'], tau=0.01)
+        except KeyboardInterrupt:
+            pass
 
     target_actor.save(logdir + '/actor.h5')
     target_critic.save(logdir + '/critic.h5')
