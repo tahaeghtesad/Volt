@@ -76,7 +76,7 @@ class OUActionNoise:
         x = (
             self.x_prev
             + self.theta * (self.mean - self.x_prev) * self.dt
-            + self.std_dev * tf.math.sqrt(self.dt) * tf.random.normal(0, 0.2, size=self.mean.shape)
+            + self.std_dev * tf.math.sqrt(self.dt) * tf.random.normal(self.mean.shape)
         )
         # Store x into x_prev
         # Makes next noise dependent on current one
