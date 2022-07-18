@@ -250,7 +250,7 @@ def main(logdir, numcpus):
     actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
     critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.002)
 
-    buffer = ExperienceReplayBuffer(buffer_size=50000, sample_size=128)
+    buffer = ExperienceReplayBuffer(buffer_size=10000, sample_size=128)
 
     with ThreadPool(processes=numcpus) as tp:
 
