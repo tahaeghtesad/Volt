@@ -312,15 +312,15 @@ def main(logdir, numcpus):
 
 if __name__ == '__main__':
 
-    logdir = "logs/ddpg/" + datetime.now().strftime("%Y%m%d-%H%M%S")
-    file_writer = tf.summary.create_file_writer(logdir + "/metrics")
-    file_writer.set_as_default()
-
     try:
         gpus = tf.config.experimental.list_physical_devices('GPU')
         if gpus:
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
+
+        logdir = "logs/ddpg/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+        file_writer = tf.summary.create_file_writer(logdir + "/metrics")
+        file_writer.set_as_default()
 
         main(logdir, 12)
     except RuntimeError as e:
