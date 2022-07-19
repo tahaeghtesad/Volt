@@ -2,12 +2,14 @@ function [V_phase_OPENDSS] = OPENDSS_interface_qinj_static(t,load_var,q_inj,Data
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 
+	global TEMPDIR
+
 [DSSStartOK, DSSObj, DSSText] = DSSStartup;
 
 if DSSStartOK
 
 DSSObj.AllowForms = false;
-DSSText.Command = 'Set DataPath =C:\Users\teghtesa\PycharmProjects\Volt\envs\power\ieee13_all_control';
+DSSText.Command = ['Set DataPath =' TEMPDIR];
 DSSText.Command = 'Compile IEEE13Nodeckt.dss';
 lm=load_var;
 % lm=1.2;

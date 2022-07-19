@@ -7,6 +7,8 @@
 % MODEL.............................................................................
 
 global T
+global load_var
+global TEMPDIR
 
 Topology_123_bus_reg
 

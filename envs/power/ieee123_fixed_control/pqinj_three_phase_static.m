@@ -2,12 +2,14 @@
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 function[V_phase_OPENDSS] = pqinj_three_phase_static(Data,load_var,q_inj)
+
+	global TEMPDIR
 [DSSStartOK, DSSObj, DSSText] = DSSStartup;
 
 if DSSStartOK
 
 DSSObj.AllowForms = false;
-DSSText.Command = 'Set DataPath =C:\Users\teghtesa\PycharmProjects\Volt\envs\power\ieee123_fixed_control\';
+DSSText.Command = ['Set DataPath =' TEMPDIR];
 DSSText.Command = 'Compile IEEE123Master.dss';   
  %lm=Data.load_var{t,2};
  lm=load_var;

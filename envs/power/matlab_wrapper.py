@@ -1,10 +1,13 @@
 import io
 import logging
+import random
+import sys
 
 import gym
 import matlab.engine
 import numpy as np
-from tqdm import tqdm
+import shutil
+import tempfile
 
 from util.reusable_pool import ReusablePool
 
@@ -24,9 +27,14 @@ class MatlabWrapperEnv(gym.Env):
 
         # self.progress_bar.set_description(f'{env_id}|Starting Matlab...')
 
+        self.temp_dir = tempfile.gettempdir() + f'\\tmp{random.randint(10000000, 99999999)}'
+        shutil.copytree(
+            f'C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\{env_config["system"]}_{env_config["mode"]}',
+            self.temp_dir)
+        self.logger.info(f'Copied {env_config["system"]}_{env_config["mode"]} to {self.temp_dir}')
+
         self.engine = self.engine_pool.acquire()
-        self.engine.addpath(
-            f'C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\{env_config["system"]}_{env_config["mode"]}')
+        self.engine.addpath(self.temp_dir)
 
         self.null_stream = io.StringIO()
 
@@ -36,6 +44,7 @@ class MatlabWrapperEnv(gym.Env):
 
         self.engine.workspace['T'] = int(1.5 * self.T + 1)
         self.engine.workspace['load_var'] = 1
+        self.engine.workspace['TEMPDIR'] = self.temp_dir
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         self.n = int(self.engine.workspace['n'])
@@ -63,6 +72,7 @@ class MatlabWrapperEnv(gym.Env):
 
         self.engine.eval('clc', nargout=0)
         self.engine.workspace['T'] = int(1.5 * self.T + 1)
+        self.engine.workspace['TEMPDIR'] = self.temp_dir
         if self.env_config['load_var'] == 'dynamic':
             self.engine.workspace['load_var'] = float(np.random.random() * 0.4 + 0.8)
         else:
@@ -136,8 +146,8 @@ class MatlabWrapperEnv(gym.Env):
         # reward = .5 * (np.exp(-changes) - 1)\
         #        + .5 * (np.exp(-voltage_deviations) - 1)
 
-        reward += (np.exp(-voltage_deviations) - 1)
-        reward *= (1 - self.env_config['gamma'])
+        # reward += (np.exp(-voltage_deviations) - 1)
+        # reward *= (1 - self.env_config['gamma'])
 
         if (np.abs(info['q']) > 0.5).any():
             reward -= 1

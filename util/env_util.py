@@ -1,6 +1,5 @@
 import gym
 import numpy as np
-import tensorflow as tf
 
 
 class Historitized(gym.Env):
@@ -35,6 +34,8 @@ class Historitized(gym.Env):
 
 
 def get_rewards(env_config, states, rewards, dones):
+    import tensorflow as tf
+
     voltages, reactive_powers = tf.split(states, 2, axis=1)
     ret = tf.TensorArray(voltages.dtype, size=states.shape[0])
     ret = ret.write(0, tf.cast(rewards[0], voltages.dtype))

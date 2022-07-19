@@ -8,6 +8,7 @@
 
 global T
 global load_var
+global TEMPDIR
 
 Topology_13_bus
 
