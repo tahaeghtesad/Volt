@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import socket
+import numpy as np
 
 import gym
 
@@ -34,7 +35,7 @@ class RemoteEnv(gym.Env):
 
     def step(self, action):
         self.step_number += 1
-        self.messenger.send_message(dict(event='step', data=action))
+        self.messenger.send_message(dict(event='step', data=np.array(action)))
 
         result = self.messenger.get_message()
         return result['obs'], result['reward'], result['done'], result['info']
