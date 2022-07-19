@@ -122,8 +122,7 @@ if __name__ == '__main__':
         },
         num_samples=512,
         reuse_actors=True,
-        verbose=Verbosity.V3_TRIAL_DETAILS,
-        resources_per_trial={'gpu': 1}
+        verbose=Verbosity.V3_TRIAL_DETAILS
     )
 
     with open('log.log', 'a') as fd:
