@@ -162,7 +162,7 @@ def create_critic(env: gym.Env):
 
     out = tf.keras.layers.Dense(256, activation="relu")(concat)
     out = tf.keras.layers.Dense(256, activation="relu")(out)
-    outputs = tf.keras.layers.Dense(1, activation='linear')(out)
+    outputs = tf.keras.layers.Dense(1, activation='linear', kernel_initializer='zeros', bias_initializer='zeros')(out)
 
     # Outputs single value for give state-action
     model = tf.keras.Model([state_input, action_input], outputs, name="critic")
@@ -182,7 +182,7 @@ def create_actor(env: gym.Env):
     inputs = tf.keras.layers.Input(shape=(state_dim))
     dense = tf.keras.layers.Dense(64, activation='relu')(inputs)
     dense = tf.keras.layers.Dense(64, activation='relu')(dense)
-    output = tf.keras.layers.Dense(action_dim, activation='linear')(dense)
+    output = tf.keras.layers.Dense(action_dim, activation='linear', kernel_initializer='zeros', bias_initializer='zeros')(dense)
 
     model = tf.keras.Model(inputs=inputs, outputs=output, name="actor")
 
