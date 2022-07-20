@@ -113,25 +113,18 @@ if __name__ == '__main__':
         name='hyperparameter_check_bo_full_range',
         search_alg=BayesOptSearch(space=search_space,
                                   points_to_evaluate=points_to_evaluate,
-                                  metric="epoch_reward_mean", mode="min", verbose=1, patience=64,
-                                  random_search_steps=32),
+                                  metric="epoch_reward_mean", mode="min", verbose=1, patience=128,
+                                  random_search_steps=8),
         # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
         # scheduler=FIFOScheduler(),
         stop={
             'training_iteration': 1,
         },
-        num_samples=512,
+        num_samples=-1,
         reuse_actors=True,
         verbose=Verbosity.V3_TRIAL_DETAILS
     )
-
-    with open('log.log', 'a') as fd:
-        fd.write(str(analysis.results_df.sort_values(by=['epoch_reward_mean'], ascending=True).head(64)[
-                         ['config.alpha', 'config.beta', 'config.gamma', 'config.c',
-                          'epoch_reward_mean', 'epoch_reward_std', 'epoch_reward_min', 'epoch_reward_max',
-                          'epoch_reward_q25', 'epoch_reward_q75']]))
-
-    analysis.results_df.sort_values(by=['epoch_reward_mean'], ascending=True).head(16)[
+    analysis.results_df.sort_values(by=['epoch_reward_mean'], ascending=True)[
         ['config.alpha', 'config.beta', 'config.gamma', 'config.c',
          'epoch_reward_mean', 'epoch_reward_std', 'epoch_reward_min', 'epoch_reward_max',
          'epoch_reward_q25', 'epoch_reward_q75']].to_csv(
