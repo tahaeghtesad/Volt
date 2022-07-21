@@ -162,7 +162,7 @@ def create_critic(env: gym.Env):
 
     out = tf.keras.layers.Dense(256, activation="relu")(concat)
     out = tf.keras.layers.Dense(256, activation="relu")(out)
-    outputs = tf.keras.layers.Dense(1, activation='linear', kernel_initializer='zeros', bias_initializer='zeros')(out)
+    outputs = tf.keras.layers.Dense(1, activation='tanh')(out)
 
     # Outputs single value for give state-action
     model = tf.keras.Model([state_input, action_input], outputs, name="critic")
@@ -249,7 +249,7 @@ def main(logdir, numcpus):
     critic.summary()
     actor.summary()
 
-    actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.05)
+    actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
     critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
     buffer = ExperienceReplayBuffer(buffer_size=10000, sample_size=128)
