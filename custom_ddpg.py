@@ -249,8 +249,8 @@ def main(logdir, numcpus):
     critic.summary()
     actor.summary()
 
-    actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-    critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.002)
+    actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.05)
+    critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
     buffer = ExperienceReplayBuffer(buffer_size=10000, sample_size=128)
 
