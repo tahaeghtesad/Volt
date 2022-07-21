@@ -162,7 +162,7 @@ def create_critic(env: gym.Env):
 
     out = tf.keras.layers.Dense(256, activation="relu")(concat)
     out = tf.keras.layers.Dense(256, activation="relu")(out)
-    outputs = tf.keras.layers.Dense(1, activation='tanh')(out)
+    outputs = tf.keras.layers.Dense(1, activation='linear')(out)
 
     # Outputs single value for give state-action
     model = tf.keras.Model([state_input, action_input], outputs, name="critic")
