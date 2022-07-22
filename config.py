@@ -3,7 +3,7 @@ gamma = 0.90
 env_config = {
     'system': 'ieee13',
     'mode': 'all_control',
-    'load_var': 'dynamic',  # can be floating point (between 0.8 and 1.2) or 'dynamic'
+    'load_var': 1.0,  # can be floating point (between 0.8 and 1.2) or 'dynamic'
     'voltage_threshold': 0.05,  # ([0.95, 1.05])
     'range': {  # alpha, beta, gamma, c, respectively
         'low': [-10, -10, -10, -10],

@@ -96,8 +96,8 @@ class VCAlphaGamma(VC):
                 new_obs, reward, done, info = self.env.step(np.array([
                     -10.0,
                     -10.0,
-                    self.config['ratio'] + 10.0,  # (7, 13)
-                    4.0]
+                    self.config['ratio'] + 10.0,
+                    4.039414574158694]
                 ))
 
                 states.append(observation)
@@ -157,7 +157,7 @@ search_space = {
 }
 
 search_space_ag = {
-    'ratio': (-3, 3),
+    'ratio': (-1, 1),
 }
 
 if __name__ == '__main__':
