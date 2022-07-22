@@ -96,7 +96,7 @@ class VCAlphaGamma(VC):
                 new_obs, reward, done, info = self.env.step(np.array([
                     -10.0,
                     -10.0,
-                    self.config['ratio'] + 10.0,
+                    self.config['ratio'] + 10.0,  # (7, 13)
                     4.0]
                 ))
 
@@ -184,8 +184,13 @@ if __name__ == '__main__':
         reuse_actors=True,
         verbose=Verbosity.V3_TRIAL_DETAILS
     )
+    # analysis.results_df.sort_values(by=['epoch_reward_mean'], ascending=True)[
+    #     ['config.alpha', 'config.beta', 'config.gamma', 'config.c',
+    #      'epoch_reward_mean', 'epoch_reward_std', 'epoch_reward_min', 'epoch_reward_max',
+    #      'epoch_reward_q25', 'epoch_reward_q75']].to_csv(
+    #     f'hyperparameter_{env_config["system"]}_{env_config["mode"]}.csv')
+
     analysis.results_df.sort_values(by=['epoch_reward_mean'], ascending=True)[
-        ['config.alpha', 'config.beta', 'config.gamma', 'config.c',
-         'epoch_reward_mean', 'epoch_reward_std', 'epoch_reward_min', 'epoch_reward_max',
-         'epoch_reward_q25', 'epoch_reward_q75']].to_csv(
-        f'hyperparameter_{env_config["system"]}_{env_config["mode"]}.csv')
+        ['ratio',
+         'epoch_reward_mean']].to_csv(
+        f'hyperparameter_{env_config["system"]}_{env_config["mode"]}_ratio.csv')
