@@ -31,6 +31,10 @@ custom_ddpg_config = {
     'buffer_size': 10_000,
     'batch_size': 256,
     'cpu_count': 12,
+    'OU_mean': 0,
+    'OU_std': 0.5,
+    'OU_theta': 0.15,
+    'OU_dt': 0.01,
 }
 
 model_config = {

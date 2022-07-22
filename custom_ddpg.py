@@ -25,7 +25,10 @@ def get_single_trajectory(env, actor):
     dones = []
 
     observation = env.reset()
-    noise = OUActionNoise(mean=tf.zeros(env.action_space.low.shape[0]), std_deviation=0.3 * tf.ones(env.action_space.low.shape[0]))
+    noise = OUActionNoise(mean=custom_ddpg_config['OU_mean'] * tf.ones(env.action_space.low.shape[0]),
+                          std_deviation=custom_ddpg_config['OU_std'] * tf.ones(env.action_space.low.shape[0]),
+                          theta=custom_ddpg_config['OU_theta'],
+                          dt=custom_ddpg_config['OU_dt'])
     done = False
 
     while not done:
