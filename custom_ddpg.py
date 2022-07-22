@@ -305,7 +305,7 @@ def main(logdir):
                 tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
 
                 if len(buffer.buffer) > buffer.batch_size:
-                    for _ in range(max(1, int(tf.reduce_sum([len(t['states']) for t in trajectories]) / buffer.batch_size * 8))):
+                    for _ in range(max(1, int(sum([len(t['states']) for t in trajectories]) / buffer.batch_size * 8))):
                         train(epoch,
                               actor_optimizer, critic_optimizer,
                               actor, target_actor, critic, target_critic,

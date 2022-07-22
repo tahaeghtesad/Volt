@@ -30,13 +30,12 @@ class VC(Trainable):
             done = False
 
             while not done:
-
                 new_obs, reward, done, info = self.env.step(np.array([
-                        self.config['alpha'],
-                        self.config['beta'],
-                        self.config['gamma'],
-                        self.config['c']]
-                    ))
+                    self.config['alpha'],
+                    self.config['beta'],
+                    self.config['gamma'],
+                    self.config['c']]
+                ))
 
                 states.append(observation)
                 rewards.append(reward)
@@ -76,6 +75,60 @@ class VC(Trainable):
         self.env.close()
 
 
+class VCAlphaGamma(VC):
+
+    def __init__(self, config=None, logger_creator=None):
+        super().__init__(config, logger_creator)
+
+    def step(self):
+        epoch_rewards = []
+
+        for epoch in range(self.config['epochs']):
+            states = []
+            rewards = []
+            next_states = []
+            dones = []
+
+            observation = self.env.reset()
+            done = False
+
+            while not done:
+                new_obs, reward, done, info = self.env.step(np.array([
+                    -2.0,
+                    -3.0,
+                    self.config['ratio'] + 2.0,
+                    3.0]
+                ))
+
+                states.append(observation)
+                rewards.append(reward)
+                next_states.append(new_obs)
+                dones.append(done)
+
+                observation = new_obs
+
+            rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
+            convergence_time = np.where(rewards == 1)[0]
+            if len(np.where(rewards == 1)[0]) > 0:
+                convergence_time = convergence_time[0]
+            else:
+                if len(np.where(rewards == -1)[0]) > 0:
+                    convergence_time = 10 * env_config['T']
+                else:
+                    convergence_time = env_config['T']
+
+            epoch_rewards.append(convergence_time)
+
+        return dict(
+            epoch_reward_min=np.min(epoch_rewards),
+            epoch_reward_max=np.max(epoch_rewards),
+            epoch_reward_mean=np.mean(epoch_rewards),
+            epoch_reward_std=np.std(epoch_rewards),
+            epoch_reward_q25=np.quantile(epoch_rewards, 0.25),
+            epoch_reward_q75=np.quantile(epoch_rewards, 0.75),
+        )
+
+
 # These happened to be the best hyper-parameters. Reward: -0.785176
 # points_to_evaluate = [
 #     {'alpha': -2.6989700043360187, 'beta': 0.0, 'gamma': 2.2518119729937998, 'c': -0.3010299956639812},
@@ -103,18 +156,25 @@ search_space = {
     'c': (env_config['range']['low'][3], env_config['range']['high'][3]),
 }
 
+search_space_ag = {
+    'ratio': (env_config['range']['low'][0], env_config['range']['high'][0]),
+}
+
 if __name__ == '__main__':
-    ray.init(num_cpus=16)
+    ray.init(num_cpus=12)
     pd.set_option("display.precision", 16)
     env_config.update()
     analysis = tune.run(
-        VC,
+        # VC,
+        VCAlphaGamma,
         config=env_config,
         name='hyperparameter_check_bo_full_range',
-        search_alg=BayesOptSearch(space=search_space,
-                                  points_to_evaluate=points_to_evaluate,
-                                  metric="epoch_reward_mean", mode="min", verbose=1, patience=128,
-                                  random_search_steps=8),
+        search_alg=BayesOptSearch(
+            # space=search_space,
+            space=search_space_ag,
+            points_to_evaluate=points_to_evaluate,
+            metric="epoch_reward_mean", mode="min", verbose=1, patience=128,
+            random_search_steps=8),
         # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
         # scheduler=FIFOScheduler(),
         stop={
