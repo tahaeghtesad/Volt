@@ -191,6 +191,6 @@ if __name__ == '__main__':
     #     f'hyperparameter_{env_config["system"]}_{env_config["mode"]}.csv')
 
     analysis.results_df.sort_values(by=['epoch_reward_mean'], ascending=True)[
-        ['ratio',
+        ['config.ratio',
          'epoch_reward_mean']].to_csv(
         f'hyperparameter_{env_config["system"]}_{env_config["mode"]}_ratio.csv')
