@@ -172,7 +172,7 @@ if __name__ == '__main__':
         search_alg=BayesOptSearch(
             # space=search_space,
             space=search_space_ag,
-            points_to_evaluate=points_to_evaluate,
+            # points_to_evaluate=points_to_evaluate,
             metric="epoch_reward_mean", mode="min", verbose=1, patience=128,
             random_search_steps=8),
         # scheduler=AsyncHyperBandScheduler(metric='reward', mode='max'),
