@@ -7,7 +7,7 @@ import gym
 import tensorflow as tf
 from tqdm import tqdm
 
-from config import env_config
+from config import env_config, custom_ddpg_config
 from envs.remote.client import RemoteEnv
 from util.env_util import get_rewards
 
@@ -92,9 +92,9 @@ class OUActionNoise:
 
 
 class ExperienceReplayBuffer:
-    def __init__(self, buffer_size, sample_size):
+    def __init__(self, buffer_size, batch_size):
         self.buffer_size = buffer_size
-        self.sample_size = sample_size
+        self.batch_size = batch_size
         self.lock = threading.Lock()
 
         self.buffer = []
@@ -123,7 +123,7 @@ class ExperienceReplayBuffer:
             self.buffer.extend(converted)
 
     def sample(self):
-        experiences = random.choices(self.buffer, k=self.sample_size)
+        experiences = random.choices(self.buffer, k=self.batch_size)
         ret = dict(
             states=[],
             actions=[],
@@ -229,12 +229,12 @@ def update_target(target_weights, weights, tau):
         a.assign(a * (1 - tau) + b * tau)
 
 
-def main(logdir, numcpus):
+def main(logdir):
 
-    print(f'Starting thraining with {numcpus} cpus. Logging to {logdir}')
+    print(f'Starting thraining with {custom_ddpg_config["cpu_count"]} cpus. Logging to {logdir}')
 
-    with ThreadPool(numcpus) as pool:
-        envs = pool.starmap(RemoteEnv, [('localhost', 6985, env_config) for _ in range(numcpus)])
+    with ThreadPool(custom_ddpg_config["cpu_count"]) as pool:
+        envs = pool.starmap(RemoteEnv, [('localhost', 6985, env_config) for _ in range(custom_ddpg_config["cpu_count"])])
 
     critic = create_critic(envs[0])
     target_critic = create_critic(envs[0])
@@ -249,12 +249,13 @@ def main(logdir, numcpus):
     critic.summary()
     actor.summary()
 
-    actor_optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
-    critic_optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    actor_optimizer = tf.keras.optimizers.Adam(learning_rate=custom_ddpg_config["actor_lr"])
+    critic_optimizer = tf.keras.optimizers.Adam(learning_rate=custom_ddpg_config["critic_lr"])
 
-    buffer = ExperienceReplayBuffer(buffer_size=10000, sample_size=128)
+    buffer = ExperienceReplayBuffer(buffer_size=custom_ddpg_config["buffer_size"],
+                                    batch_size=custom_ddpg_config["batch_size"])
 
-    with ThreadPool(processes=numcpus) as tp:
+    with ThreadPool(processes=custom_ddpg_config["cpu_count"]) as tp:
 
         try:
 
@@ -300,9 +301,14 @@ def main(logdir, numcpus):
                 tf.summary.scalar('trajectories/min_reactive', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
                 tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
 
-                if len(buffer.buffer) > buffer.sample_size:
-                    for _ in range(max(1, int(tf.reduce_sum([len(t['states']) for t in trajectories]) / buffer.sample_size * 8))):
-                        train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, buffer.sample(), gamma=env_config['gamma'], tau=0.01)
+                if len(buffer.buffer) > buffer.batch_size:
+                    for _ in range(max(1, int(tf.reduce_sum([len(t['states']) for t in trajectories]) / buffer.batch_size * 8))):
+                        train(epoch,
+                              actor_optimizer, critic_optimizer,
+                              actor, target_actor, critic, target_critic,
+                              buffer.sample(),
+                              gamma=env_config['gamma'],
+                              tau=custom_ddpg_config["tau"])
         except KeyboardInterrupt:
             pass
 
@@ -324,6 +330,6 @@ if __name__ == '__main__':
         file_writer = tf.summary.create_file_writer(logdir + "/metrics")
         file_writer.set_as_default()
 
-        main(logdir, 12)
+        main(logdir)
     except RuntimeError as e:
         print(f'Failed to set GPU growth: {e}')

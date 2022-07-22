@@ -24,6 +24,15 @@ env_config = {
     'gamma': gamma,
 }
 
+custom_ddpg_config = {
+    'actor_lr': 0.005,
+    'critic_lr': 0.002,
+    'tau': 0.001,
+    'buffer_size': 10_000,
+    'batch_size': 256,
+    'cpu_count': 12,
+}
+
 model_config = {
     "fcnet_hiddens": [64, 64, 64],
     "vf_share_layers": True,
