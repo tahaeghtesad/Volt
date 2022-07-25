@@ -196,7 +196,7 @@ def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic,
           gamma: float, tau: float):
 
     target_actions = target_actor(samples['next_states'], training=False)
-    y = samples['rewards'] + samples['dones'] * gamma * target_critic(
+    y = samples['rewards'] + (1 - samples['dones']) * gamma * target_critic(
         [samples['next_states'], target_actions], training=False
     )
 
