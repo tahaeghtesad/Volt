@@ -185,7 +185,7 @@ def create_actor(env: gym.Env):
     inputs = tf.keras.layers.Input(shape=(state_dim))
     dense = tf.keras.layers.Dense(64, activation='relu')(inputs)
     dense = tf.keras.layers.Dense(64, activation='relu')(dense)
-    output = tf.keras.layers.Dense(action_dim, activation='linear', kernel_initializer='zeros', bias_initializer='zeros')(dense)
+    output = tf.keras.layers.Dense(action_dim, activation='linear')(dense)
 
     model = tf.keras.Model(inputs=inputs, outputs=output, name="actor")
 

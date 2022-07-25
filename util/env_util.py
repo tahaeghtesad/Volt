@@ -48,9 +48,11 @@ def get_rewards(env_config, states, rewards, dones):
             ret = ret.write(t, 1.0)
             dones[t] = True
         else:
-            voltage_deviation = tf.reduce_mean(tf.clip_by_value(tf.abs(voltages[t] - 1) - env_config['voltage_threshold'], 0, voltages.dtype.max))
-            reactive_power_deviation = tf.reduce_mean(tf.clip_by_value(tf.abs(reactive_powers[t:t+env_config['window_size'], :] - reactive_powers[t, :]) - env_config['change_threshold'], 0.0, voltages.dtype.max))
-            reward = (tf.exp(-voltage_deviation) + tf.exp(-reactive_power_deviation) - 2) * (1 - env_config['gamma']) * 0.5
-            ret = ret.write(t, reward)
+            ret = ret.write(t, 0.0)
+        # else:
+        #     voltage_deviation = tf.reduce_mean(tf.clip_by_value(tf.abs(voltages[t] - 1) - env_config['voltage_threshold'], 0, voltages.dtype.max))
+        #     reactive_power_deviation = tf.reduce_mean(tf.clip_by_value(tf.abs(reactive_powers[t:t+env_config['window_size'], :] - reactive_powers[t, :]) - env_config['change_threshold'], 0.0, voltages.dtype.max))
+        #     reward = (tf.exp(-voltage_deviation) + tf.exp(-reactive_power_deviation) - 2) * (1 - env_config['gamma']) * 0.5
+        #     ret = ret.write(t, reward)
 
     return ret.stack()

@@ -169,7 +169,7 @@ def main():
 
 def plot():
     env = RemoteEnv('localhost', 6985, env_config)
-    n_points = 20
+    n_points = 50
     ratios = np.linspace(-0.25, 0.25, n_points)
     rewards = [0 for _ in range(n_points)]
     for i, ratio in enumerate(ratios):
