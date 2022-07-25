@@ -32,8 +32,11 @@ def get_single_trajectory(env, actor):
     done = False
 
     while not done:
-        action = actor(tf.convert_to_tensor([observation]))[0] + noise()
+        action = actor(tf.convert_to_tensor([observation]))[0]
         scaled_action = tf.sigmoid(action) * (env.action_space.high - env.action_space.low) + env.action_space.low
+
+        if random.random() < 0.2:
+            scaled_action = env.action_space.sample()
 
         new_obs, reward, done, info = env.step(scaled_action)
 
