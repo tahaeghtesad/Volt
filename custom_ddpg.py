@@ -32,10 +32,10 @@ def get_single_trajectory(env, actor):
     done = False
 
     while not done:
-        if random.random() < 0.2:
+        if random.random() < 0.0:
             action = tf.random.uniform(env.action_space.low.shape)
         else:
-            action = actor(tf.convert_to_tensor([observation]))[0]
+            action = actor(tf.convert_to_tensor([observation]))[0] + noise()
 
         scaled_action = action * (env.action_space.high - env.action_space.low) + env.action_space.low
 
