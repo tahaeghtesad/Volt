@@ -269,7 +269,7 @@ def main(logdir):
                     buffer.add(t)
 
                 tf.summary.scalar('env/return', data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
-                tf.summary.scalar('env/length', data=tf.reduce_mean([len(t['states']) for t in trajectories]), step=epoch)
+                tf.summary.scalar('env/length', data=tf.reduce_mean([float(len(t['states'])) for t in trajectories]), step=epoch)
 
                 tf.summary.scalar('power_grid/gamma+alpha', data=tf.reduce_min(
                     [tf.reduce_min([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
