@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import ray
+import matplotlib.pyplot as plt
 from ray import tune
 from ray.tune import Trainable
 from ray.tune.suggest.bayesopt import BayesOptSearch
@@ -18,52 +19,12 @@ class VC(Trainable):
         self.env = RemoteEnv('localhost', 6985, self.config)
 
     def step(self):
-        epoch_rewards = []
-
-        for epoch in range(self.config['epochs']):
-            states = []
-            rewards = []
-            next_states = []
-            dones = []
-
-            observation = self.env.reset()
-            done = False
-
-            while not done:
-                new_obs, reward, done, info = self.env.step(np.array([
-                    self.config['alpha'],
-                    self.config['beta'],
-                    self.config['gamma'],
-                    self.config['c']]
-                ))
-
-                states.append(observation)
-                rewards.append(reward)
-                next_states.append(new_obs)
-                dones.append(done)
-
-                observation = new_obs
-
-            rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
-            convergence_time = np.where(rewards == 1)[0]
-            if len(np.where(rewards == 1)[0]) > 0:
-                convergence_time = convergence_time[0]
-            else:
-                if len(np.where(rewards == -1)[0]) > 0:
-                    convergence_time = 10 * env_config['T']
-                else:
-                    convergence_time = env_config['T']
-
-            epoch_rewards.append(convergence_time)
-
-        return dict(
-            epoch_reward_min=np.min(epoch_rewards),
-            epoch_reward_max=np.max(epoch_rewards),
-            epoch_reward_mean=np.mean(epoch_rewards),
-            epoch_reward_std=np.std(epoch_rewards),
-            epoch_reward_q25=np.quantile(epoch_rewards, 0.25),
-            epoch_reward_q75=np.quantile(epoch_rewards, 0.75),
-        )
+        return fitness(self.env,
+                       self.config['alpha'],
+                       self.config['beta'],
+                       self.config['gamma'],
+                       self.config['c'],
+                       self.config['epochs'])
 
     def reset_config(self, new_config):
         return True
@@ -81,52 +42,61 @@ class VCAlphaGamma(VC):
         super().__init__(config, logger_creator)
 
     def step(self):
-        epoch_rewards = []
+        return fitness(self.env,
+                       -10.0,
+                       -10.0,
+                       self.config['ratio'] + 10.0,
+                       4.039414574158694,
+                       self.config['epochs'])
 
-        for epoch in range(self.config['epochs']):
-            states = []
-            rewards = []
-            next_states = []
-            dones = []
 
-            observation = self.env.reset()
-            done = False
+def fitness(env, alpha, beta, gamma, c, epochs):
+    print(f'Calculating fitness for alpha={alpha}, beta={beta}, gamma={gamma}, c={c}')
+    epoch_rewards = []
 
-            while not done:
-                new_obs, reward, done, info = self.env.step(np.array([
-                    -10.0,
-                    -10.0,
-                    self.config['ratio'] + 10.0,
-                    4.039414574158694]
-                ))
+    for epoch in range(epochs):
+        states = []
+        rewards = []
+        next_states = []
+        dones = []
 
-                states.append(observation)
-                rewards.append(reward)
-                next_states.append(new_obs)
-                dones.append(done)
+        observation = env.reset()
+        done = False
 
-                observation = new_obs
+        while not done:
+            new_obs, reward, done, info = env.step(np.array([
+                alpha, beta, gamma, c
+            ]))
 
-            rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
-            convergence_time = np.where(rewards == 1)[0]
-            if len(np.where(rewards == 1)[0]) > 0:
-                convergence_time = convergence_time[0]
+            states.append(observation)
+            rewards.append(reward)
+            next_states.append(new_obs)
+            dones.append(done)
+
+            observation = new_obs
+
+        rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
+        convergence_time = np.where(rewards == 1)[0]
+        if len(np.where(rewards == 1)[0]) > 0:
+            convergence_time = convergence_time[0]
+        else:
+            if len(np.where(rewards == -1)[0]) > 0:
+                convergence_time = 10 * env_config['T']
             else:
-                if len(np.where(rewards == -1)[0]) > 0:
-                    convergence_time = 10 * env_config['T']
-                else:
-                    convergence_time = env_config['T']
+                convergence_time = env_config['T']
 
-            epoch_rewards.append(convergence_time)
+        epoch_rewards.append(convergence_time)
 
-        return dict(
-            epoch_reward_min=np.min(epoch_rewards),
-            epoch_reward_max=np.max(epoch_rewards),
-            epoch_reward_mean=np.mean(epoch_rewards),
-            epoch_reward_std=np.std(epoch_rewards),
-            epoch_reward_q25=np.quantile(epoch_rewards, 0.25),
-            epoch_reward_q75=np.quantile(epoch_rewards, 0.75),
-        )
+    ret = dict(
+        epoch_reward_min=np.min(epoch_rewards),
+        epoch_reward_max=np.max(epoch_rewards),
+        epoch_reward_mean=np.mean(epoch_rewards),
+        epoch_reward_std=np.std(epoch_rewards),
+        epoch_reward_q25=np.quantile(epoch_rewards, 0.25),
+        epoch_reward_q75=np.quantile(epoch_rewards, 0.75),
+    )
+    print(ret)
+    return ret
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
@@ -160,7 +130,8 @@ search_space_ag = {
     'ratio': (-1, 1),
 }
 
-if __name__ == '__main__':
+
+def main():
     ray.init(num_cpus=12)
     pd.set_option("display.precision", 16)
     env_config.update()
@@ -194,3 +165,27 @@ if __name__ == '__main__':
         ['config.ratio',
          'epoch_reward_mean']].to_csv(
         f'hyperparameter_{env_config["system"]}_{env_config["mode"]}_ratio.csv')
+
+
+def plot():
+    env = RemoteEnv('localhost', 6985, env_config)
+    n_points = 20
+    ratios = np.linspace(-0.25, 0.25, n_points)
+    rewards = [0 for _ in range(n_points)]
+    for i, ratio in enumerate(ratios):
+        rewards[i] = fitness(env, -10.0,
+                             -10.0,
+                             ratio + 10.0,
+                             4.039414574158694,
+                             1
+                             )['epoch_reward_mean']
+        if rewards[i] > 100:
+            rewards[i] = -1
+
+    plt.plot(ratios, rewards)
+    plt.savefig('restricted-ration-range.png')
+    plt.show()
+
+
+if __name__ == '__main__':
+    plot()
