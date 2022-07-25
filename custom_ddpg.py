@@ -196,7 +196,7 @@ def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic,
           gamma: float, tau: float):
 
     target_actions = target_actor(samples['next_states'], training=False)
-    y = samples['rewards'] + gamma * target_critic(
+    y = samples['rewards'] + samples['dones'] * gamma * target_critic(
         [samples['next_states'], target_actions], training=False
     )
 
@@ -208,6 +208,8 @@ def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic,
     critic_optimizer.apply_gradients(
         zip(critic_grad, critic.trainable_variables)
     )
+
+    tf.summary.scalar('ddpg/state_val', data=tf.reduce_mean(critic_value), step=epoch)
 
     with tf.GradientTape() as actor_tape:
         actions = actor(samples['states'], training=True)
@@ -222,7 +224,6 @@ def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic,
     update_target(target_actor.weights, actor.weights, tau=tau)
     update_target(target_critic.weights, critic.weights, tau=tau)
 
-    tf.summary.scalar('ddpg/state_val', data=tf.reduce_mean(critic_value), step=epoch)
     tf.summary.scalar('ddpg/critic_loss', data=critic_loss, step=epoch)
     tf.summary.scalar('ddpg/actor_loss', data=actor_loss, step=epoch)
 
