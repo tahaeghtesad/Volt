@@ -32,14 +32,14 @@ env_config = {
 }
 
 custom_ddpg_config = {
-    'actor_lr': 0.005,
-    'critic_lr': 0.002,
-    'tau': 0.001,
-    'buffer_size': 10_000,
-    'batch_size': 256,
+    'actor_lr': 0.0005,
+    'critic_lr': 0.005,
+    'tau': 1.0,
+    'buffer_size': 20_000,
+    'batch_size': 128,
     'cpu_count': 12,
     'OU_mean': 0,
-    'OU_std': 0.5,
+    'OU_std': 0.0,
     'OU_theta': 0.15,
     'OU_dt': 0.01,
 }
