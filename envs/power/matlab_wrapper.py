@@ -31,7 +31,7 @@ class MatlabWrapperEnv(gym.Env):
         shutil.copytree(
             f'C:\\Users\\teghtesa\\PycharmProjects\\Volt\\envs\\power\\{env_config["system"]}_{env_config["mode"]}',
             self.temp_dir)
-        self.logger.info(f'Copied {env_config["system"]}_{env_config["mode"]} to {self.temp_dir}')
+        self.logger.debug(f'Copied {env_config["system"]}_{env_config["mode"]} to {self.temp_dir}')
 
         self.engine = self.engine_pool.acquire()
         self.engine.addpath(self.temp_dir)
