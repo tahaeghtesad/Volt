@@ -59,13 +59,18 @@ class ServerThread(Thread):
                     obs = self.env.reset()
                     self.messenger.send_message(dict(obs=obs))
 
-                elif message['event'] == 'close' or message['event'] == 'exception':
+                elif message['event'] == 'close':
                     self.logger.debug('Connection closed.')
                     self.messenger.conn.close()
                     self.env.close()
                     self.finished = True
+                elif message['event'] == 'exception':
                     if 'data' in message:
-                        raise Exception(message['data'])
+                        self.logger.exception(message['data'])
+                    self.messenger.conn.close()
+                    self.env.close()
+                    self.finished = True
+                    break
 
             except Exception as e:
                 # Usully if there is an exception, the connection is closed. Therefore, the following line throws an exception.
@@ -74,6 +79,7 @@ class ServerThread(Thread):
                 self.finished = True
                 self.messenger.conn.close()
                 self.env.close()
+                break
 
 
 if __name__ == '__main__':
