@@ -32,10 +32,10 @@ def get_single_trajectory(env, actor):
     done = False
 
     while not done:
-        if random.random() < 0.0:
+        if random.random() < 0.2:
             action = tf.random.uniform(env.action_space.low.shape)
         else:
-            action = actor(tf.convert_to_tensor([observation]))[0] + noise()
+            action = actor(tf.convert_to_tensor([observation]))[0]
 
         scaled_action = action * (env.action_space.high - env.action_space.low) + env.action_space.low
 
@@ -264,10 +264,8 @@ def main(logdir):
                                     batch_size=custom_ddpg_config["batch_size"])
 
     with ThreadPool(processes=custom_ddpg_config["cpu_count"]) as tp:
-
         try:
-
-            for epoch in tqdm(range(10000)):
+            for epoch in tqdm(range(custom_ddpg_config["training_epochs"])):
                 trajectories = tp.starmap(get_single_trajectory, [(env, target_actor) for env in envs])
                 for t in trajectories:
                     buffer.add(t)
