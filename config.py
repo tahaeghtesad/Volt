@@ -32,7 +32,7 @@ env_config = {
 }
 
 custom_ddpg_config = {
-    'actor_lr': 0.0005,
+    'actor_lr': 0.00005,
     'critic_lr': 0.005,
     'tau': 0.01,
     'training_epochs': 2000,
