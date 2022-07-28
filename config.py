@@ -40,9 +40,10 @@ custom_ddpg_config = {
     'batch_size': 128,
     'cpu_count': 12,
     'OU_mean': 0.0,
-    'OU_std': 0.1,
+    'OU_std': 0.0,
     'OU_theta': 0.15,
     'OU_dt': 0.01,
+    'exploration_probability': 0.0
 }
 
 model_config = {

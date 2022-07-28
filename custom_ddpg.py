@@ -32,12 +32,12 @@ def get_single_trajectory(env, actor):
     done = False
 
     while not done:
-        if random.random() < 0.2:
+        if random.random() < custom_ddpg_config['exploration_probability']:
             action = tf.random.uniform(env.action_space.low.shape)
         else:
             action = actor(tf.convert_to_tensor([observation]))[0]
 
-        scaled_action = action * (env.action_space.high - env.action_space.low) + env.action_space.low
+        scaled_action = action * (env.action_space.high - env.action_space.low) + env.action_space.low + noise()
 
         new_obs, reward, done, info = env.step(scaled_action)
 
@@ -273,11 +273,11 @@ def main(logdir):
                 tf.summary.scalar('env/return', data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
                 tf.summary.scalar('env/length', data=tf.reduce_mean([float(len(t['states'])) for t in trajectories]), step=epoch)
 
-                tf.summary.scalar('power_grid/gamma+alpha', data=tf.reduce_min(
+                tf.summary.scalar('power_grid/gamma+alpha/min', data=tf.reduce_min(
                     [tf.reduce_min([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-                tf.summary.scalar('power_grid/gamma+alpha', data=tf.reduce_max(
+                tf.summary.scalar('power_grid/gamma+alpha/max', data=tf.reduce_max(
                     [tf.reduce_max([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
-                tf.summary.scalar('power_grid/gamma+alpha', data=tf.reduce_mean(
+                tf.summary.scalar('power_grid/gamma+alpha/mean', data=tf.reduce_mean(
                     [tf.reduce_mean([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
 
                 # tf.summary.scalar('power_grid/beta', data=tf.reduce_min(
