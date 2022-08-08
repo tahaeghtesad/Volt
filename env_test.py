@@ -20,7 +20,7 @@ from util.reusable_pool import ReusablePool
 # c = np.log10(1)  # 0
 # c = np.power(10, -1.7)
 
-# alpha = -2.69
+# alpha = -2
 # beta = -0.3
 # gamma = 2
 # c = 0
@@ -30,15 +30,21 @@ from util.reusable_pool import ReusablePool
 # gamma = 100
 # c = 1
 
-alpha=-1.6
-beta=1.2
-gamma=1.4
-c=-1.7
+# alpha = -2
+# beta = 1.2
+# gamma = 1.4
+# c = -1.7
 
-# alpha = 10 ** -4.069457373049808
-# beta = 10 ** 3.9795074542061593
-# gamma = 10 ** 3.507641819850809
-# c = 10 ** 1.0328233759129137
+# alpha=-3.780353565686756
+# beta=-3.496333559465059
+# gamma=2.751149427104263
+# c=4.5921235667612805
+
+alpha=-10
+beta=-10
+gamma=9.9
+c=1.039414574158694
+
 
 # alpha, beta, gamma, c = -2.8, -0.8, 1.2, 10
 
@@ -59,19 +65,20 @@ environment_config = env_config.copy()
 environment_config.update({
     'system': 'ieee13',
     'mode': 'all_control',
-    'T': 3000,
+    'T': 10,
     'reward_mode': 'steps',
-    'load_var': 1.0,
-    'repeat': 10,
+    'load_var': 'dynamic',
+    'repeat': 1,
 })
 
 env = MatlabWrapperEnv(1, engine_pool, env_config=environment_config)
 
-rs = []
 
 if __name__ == '__main__':
     q_table = np.zeros((env.n, env.T // env.env_config['repeat']))
     v_table = np.zeros((env.n, env.T // env.env_config['repeat']))
+
+    states = []
 
     obs = env.reset()
     done = False
@@ -81,10 +88,9 @@ if __name__ == '__main__':
     fes = []
     vd = []
     pbar = tqdm(total=env.env_config['T'] // env.env_config['repeat'])
-    # for step in tqdm(range(env.T // env.env_config['repeat'])):
+    # for step in range(env.T // env.env_config['repeat']):
     while not done:
         try:
-
             action = np.concatenate((
                 alpha * np.ones(env.n),
                 beta * np.ones(env.n),
@@ -92,23 +98,28 @@ if __name__ == '__main__':
                 c * np.ones(env.n),
             ))
 
-            _, reward, done, info = env.step(action)
+            new_state, reward, done, info = env.step(action)
+
+            states.append(obs)
 
             q_table[:, env.step_number - 1] = info['q'].reshape((env.n,))
             v_table[:, env.step_number - 1] = info['v'].reshape((env.n,))
 
             rewards.append(reward)
             fs.append(info['f'])
-            cs.append(info['changes'])
             vd.append(info['voltage_deviations'])
 
             fes.append(info['fes'])
+
+            obs = new_state
 
             pbar.update(1)
             pbar.set_description(
                 f'{sum(rewards):.2f}')
         except KeyboardInterrupt:
             break
+
+    print(np.split(obs, 2)[0])
 
     pbar.close()
 
@@ -137,11 +148,9 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     ax.set_title('r')
     ax.plot(rewards, '-o', label='reward')
-    ax.plot(-np.array(cs), '-', label='changes')
     ax.plot(-np.array(vd), '-', label='voltage_deviations')
     ax.legend()
     ax.grid()
     fig.savefig('r.png')
     plt.show()
 
-    rs.append(sum(rewards))

@@ -8,8 +8,8 @@ class MatlabWrapperAlphaGammaEnv(MatlabWrapperEnvSingleParam):
     def __init__(self, env_id, engine_pool, config):
         super().__init__(env_id, engine_pool, config)
 
-        self.action_space = gym.spaces.Box(low=np.array([-0.5]),
-                                           high=np.array([0.5]),
+        self.action_space = gym.spaces.Box(low=np.array([-0.6]),
+                                           high=np.array([0.6]),
                                            shape=(1,))
 
         self.alpha = config['default_params']['alpha']

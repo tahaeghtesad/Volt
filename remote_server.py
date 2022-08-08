@@ -6,6 +6,7 @@ from threading import Thread
 
 import matlab.engine
 
+from envs.power.malab_wrapper_alpha_gamma_single import MatlabWrapperAlphaGammaEnv
 from envs.power.matlab_wrapper_single_param import MatlabWrapperEnvSingleParam
 from util.env_util import Historitized
 from util.network_util import Messenger
@@ -45,6 +46,7 @@ class ServerThread(Thread):
         assert info['event'] == 'start', 'Client Error.'
 
         self.env = Historitized(MatlabWrapperEnvSingleParam(self.env_id, self.engine_pool, info['config']), info['config']['history_size'])
+        # self.env = Historitized(MatlabWrapperAlphaGammaEnv(self.env_id, self.engine_pool, info['config']), info['config']['history_size'])
         self.messenger.send_message(dict(observation_space=self.env.observation_space, action_space=self.env.action_space, n=self.env.env.n, T=self.env.env.T))
 
         while not self.finished:
@@ -75,7 +77,7 @@ class ServerThread(Thread):
             except Exception as e:
                 # Usully if there is an exception, the connection is closed. Therefore, the following line throws an exception.
                 # self.messenger.send_message(dict(event='exception', data=str(e)))
-                self.logger.exception(f'Client disconnected - {type(e)} - {e}')
+                self.logger.exception(f'Client disconnected - {type(e)}')
                 self.finished = True
                 self.messenger.conn.close()
                 self.env.close()

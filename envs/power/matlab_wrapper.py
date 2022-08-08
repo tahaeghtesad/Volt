@@ -76,12 +76,12 @@ class MatlabWrapperEnv(gym.Env):
         if self.env_config['load_var'] == 'dynamic':
             self.engine.workspace['load_var'] = float(np.random.random() * 0.4 + 0.8)
         else:
-            self.engine.workspace['load_var'] = self.env_config['load_var']
+            self.engine.workspace['load_var'] = float(self.env_config['load_var'])
         self.engine.Power_system_initialization(nargout=0, stdout=self.null_stream)
 
         self.q_history = [[] for _ in range(self.n)]
 
-        return np.ones(self.n * 2) * self.engine.workspace['load_var']
+        return np.zeros(self.n * 2)
 
     def step(self, action: np.ndarray):  # -> observation, reward, done, info
         action = np.power(10, action)
