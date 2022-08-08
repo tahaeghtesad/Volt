@@ -108,7 +108,7 @@ def calculate_gae(rewards, state_vals, next_state_vals, dones, gamma, lam):
     gae = 0
     gae_list = tf.TensorArray(rewards.dtype, size=rewards.shape[0])
     for i in reversed(range(len(rewards))):
-        delta = rewards[i] + gamma * next_state_vals[i] * (1 - dones[i]) - state_vals[i]
+        delta = rewards[i] + gamma * next_state_vals[i] * (1 - dones[i]) - state_vals[i]  # TODO: check if this is correct
         gae = delta + gamma * lam * (1 - dones[i]) * gae
         gae_list = gae_list.write(i, gae[0])
     return gae_list.stack()

@@ -33,11 +33,11 @@ env_config = {
 
 custom_ddpg_config = {
     'actor_lr': 0.00005,
-    'critic_lr': 0.005,
+    'critic_lr': 0.0005,
     'tau': 0.01,
     'training_epochs': 2000,
-    'buffer_size': 20_000,
-    'batch_size': 128,
+    'buffer_size': 3_000,
+    'batch_size': 256,
     'cpu_count': 12,
     'OU_mean': 0.0,
     'OU_std': 0.0,

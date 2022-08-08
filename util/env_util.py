@@ -43,7 +43,7 @@ def get_rewards(env_config, states, rewards, dones):
     for t in range(1, len(states)):
         if rewards[t] <= -1:
             ret = ret.write(t, -1.0)
-        elif tf.reduce_all(tf.abs(voltages[t] - 1) < env_config['voltage_threshold'] * 1.023) and \
+        elif tf.reduce_all(tf.abs(voltages[t] - 1) < env_config['voltage_threshold']) and \
                 tf.reduce_all(tf.abs(reactive_powers[t:t+env_config['window_size'], :] - reactive_powers[t, :]) < env_config['change_threshold']):
             ret = ret.write(t, 1.0)
             dones[t] = True

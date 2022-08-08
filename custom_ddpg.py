@@ -35,9 +35,9 @@ def get_single_trajectory(env, actor):
         if random.random() < custom_ddpg_config['exploration_probability']:
             action = tf.random.uniform(env.action_space.low.shape)
         else:
-            action = actor(tf.convert_to_tensor([observation]))[0]
+            action = actor(tf.convert_to_tensor([observation]))[0] + noise()
 
-        scaled_action = action * (env.action_space.high - env.action_space.low) + env.action_space.low + noise()
+        scaled_action = action * (env.action_space.high - env.action_space.low) + env.action_space.low
 
         new_obs, reward, done, info = env.step(scaled_action)
 
@@ -50,7 +50,8 @@ def get_single_trajectory(env, actor):
 
         observation = new_obs
 
-    rewards = get_rewards(env_config, tf.convert_to_tensor(states, dtype=tf.float32), tf.convert_to_tensor(rewards, dtype=tf.float32), dones)
+    rewards = get_rewards(env_config, tf.convert_to_tensor(states, dtype=tf.float32),
+                          tf.convert_to_tensor(rewards, dtype=tf.float32), dones)
 
     convergence_time = tf.where(rewards == 1)
     if len(convergence_time) > 0:
@@ -82,9 +83,9 @@ class OUActionNoise:
     def __call__(self):
         # Formula taken from https://www.wikipedia.org/wiki/Ornstein-Uhlenbeck_process.
         x = (
-            self.x_prev
-            + self.theta * (self.mean - self.x_prev) * self.dt
-            + self.std_dev * tf.math.sqrt(self.dt) * tf.random.normal(self.mean.shape)
+                self.x_prev
+                + self.theta * (self.mean - self.x_prev) * self.dt
+                + self.std_dev * tf.math.sqrt(self.dt) * tf.random.normal(self.mean.shape)
         )
         # Store x into x_prev
         # Makes next noise dependent on current one
@@ -178,7 +179,6 @@ def create_critic(env: gym.Env):
 
 
 def create_actor(env: gym.Env):
-
     if env.action_space.__class__.__name__ == 'Box':
         action_dim = env.action_space.sample().shape[0]
     else:
@@ -198,9 +198,8 @@ def create_actor(env: gym.Env):
 
 def train(epoch, actor_optimizer, critic_optimizer, actor, target_actor, critic, target_critic, samples,
           gamma: float, tau: float):
-
     target_actions = target_actor(samples['next_states'], training=False)
-    y = samples['rewards'] + (1 - samples['dones']) * gamma * target_critic(
+    y = samples['rewards'] + tf.expand_dims(1 - samples['dones'], axis=1) * gamma * target_critic(
         [samples['next_states'], target_actions], training=False
     )
 
@@ -238,11 +237,11 @@ def update_target(target_weights, weights, tau):
 
 
 def main(logdir):
-
     print(f'Starting thraining with {custom_ddpg_config["cpu_count"]} cpus. Logging to {logdir}')
 
     with ThreadPool(custom_ddpg_config["cpu_count"]) as pool:
-        envs = pool.starmap(RemoteEnv, [('localhost', 6985, env_config) for _ in range(custom_ddpg_config["cpu_count"])])
+        envs = pool.starmap(RemoteEnv,
+                            [('localhost', 6985, env_config) for _ in range(custom_ddpg_config["cpu_count"])])
 
     critic = create_critic(envs[0])
     target_critic = create_critic(envs[0])
@@ -266,12 +265,14 @@ def main(logdir):
     with ThreadPool(processes=custom_ddpg_config["cpu_count"]) as tp:
         try:
             for epoch in tqdm(range(custom_ddpg_config["training_epochs"])):
-                trajectories = tp.starmap(get_single_trajectory, [(env, target_actor) for env in envs])
+                trajectories = tp.starmap(get_single_trajectory, [(env, actor) for env in envs])
                 for t in trajectories:
                     buffer.add(t)
 
-                tf.summary.scalar('env/return', data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
-                tf.summary.scalar('env/length', data=tf.reduce_mean([float(len(t['states'])) for t in trajectories]), step=epoch)
+                tf.summary.scalar('env/return',
+                                  data=tf.reduce_mean([tf.reduce_sum(t['rewards']) for t in trajectories]), step=epoch)
+                tf.summary.scalar('env/length', data=tf.reduce_mean([float(len(t['states'])) for t in trajectories]),
+                                  step=epoch)
 
                 tf.summary.scalar('power_grid/gamma+alpha/min', data=tf.reduce_min(
                     [tf.reduce_min([a[0] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
@@ -301,11 +302,15 @@ def main(logdir):
                 # tf.summary.scalar('power_grid/c', data=tf.reduce_mean(
                 #     [tf.reduce_mean([a[3] for a in t['scaled_actions']]) for t in trajectories]), step=epoch)
 
-                tf.summary.scalar('trajectories/min_volt', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
-                tf.summary.scalar('trajectories/max_volt', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('trajectories/min_volt', data=tf.reduce_min(
+                    [tf.reduce_min([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('trajectories/max_volt', data=tf.reduce_max(
+                    [tf.reduce_max([tf.split(a, 2)[0] for a in t['states']]) for t in trajectories]), step=epoch)
 
-                tf.summary.scalar('trajectories/min_reactive', data=tf.reduce_min([tf.reduce_min([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
-                tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max([tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('trajectories/min_reactive', data=tf.reduce_min(
+                    [tf.reduce_min([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
+                tf.summary.scalar('trajectories/max_reactive', data=tf.reduce_max(
+                    [tf.reduce_max([tf.split(a, 2)[1] for a in t['states']]) for t in trajectories]), step=epoch)
 
                 if len(buffer.buffer) > buffer.batch_size:
                     for _ in range(max(1, int(sum([len(t['states']) for t in trajectories]) / buffer.batch_size * 8))):
@@ -319,9 +324,19 @@ def main(logdir):
             pass
 
     print('Saving actor and critic weights...')
-    target_actor.save(logdir + '/actor.h5')
-    target_critic.save(logdir + '/critic.h5')
+    actor.save(logdir + '/actor.h5')
+    critic.save(logdir + '/critic.h5')
     print(f'Actor and Critic Saved to {logdir}')
+
+
+def evaluate(env, trial_name):
+    actor = create_actor(env)
+    critic = create_critic(env)
+
+    actor.load_weights(f'logs/ddpg/{trial_name}/actor.h5')
+    critic.load_weights(f'logs/ddpg/{trial_name}/critic.h5')
+
+    return get_single_trajectory(env, actor)
 
 
 if __name__ == '__main__':
@@ -339,3 +354,8 @@ if __name__ == '__main__':
         main(logdir)
     except RuntimeError as e:
         print(f'Failed to set GPU growth: {e}')
+
+# if __name__ == '__main__':
+#     trajectory = evaluate(env=RemoteEnv('localhost', 6985, env_config),
+#              trial_name='20220727-171740')
+#     print(trajectory)

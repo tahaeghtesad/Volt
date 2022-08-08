@@ -1,6 +1,9 @@
+import multiprocessing.pool
+
 import numpy as np
 import pandas as pd
 import ray
+import pickle
 import matplotlib.pyplot as plt
 from ray import tune
 from ray.tune import Trainable
@@ -50,53 +53,72 @@ class VCAlphaGamma(VC):
                        self.config['epochs'])
 
 
-def fitness(env, alpha, beta, gamma, c, epochs):
-    print(f'Calculating fitness for alpha={alpha}, beta={beta}, gamma={gamma}, c={c}')
-    epoch_rewards = []
+def get_trajectory(env, alpha, beta, gamma, c):
 
-    for epoch in range(epochs):
-        states = []
-        rewards = []
-        next_states = []
-        dones = []
+    states = []
+    rewards = []
+    next_states = []
+    dones = []
+    actions = []
 
-        observation = env.reset()
-        done = False
+    observation = env.reset()
+    done = False
 
-        while not done:
-            new_obs, reward, done, info = env.step(np.array([
-                alpha, beta, gamma, c
-            ]))
+    while not done:
+        action = np.array([
+            alpha, beta, gamma, c
+        ])
+        new_obs, reward, done, info = env.step(action)
 
-            states.append(observation)
-            rewards.append(reward)
-            next_states.append(new_obs)
-            dones.append(done)
+        states.append(observation)
+        rewards.append(reward)
+        next_states.append(new_obs)
+        dones.append(done)
+        actions.append(action)
 
-            observation = new_obs
+        observation = new_obs
 
-        rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
-        convergence_time = np.where(rewards == 1)[0]
-        if len(np.where(rewards == 1)[0]) > 0:
-            convergence_time = convergence_time[0]
-        else:
-            if len(np.where(rewards == -1)[0]) > 0:
-                convergence_time = 10 * env_config['T']
-            else:
-                convergence_time = env_config['T']
+    rewards = get_rewards(env_config, np.array(states), np.array(rewards), dones)
 
-        epoch_rewards.append(convergence_time)
+    experiences = [dict(
+        state=s,
+        action=a,
+        reward=r.numpy(),
+        next_state=n,
+        done=d
+    ) for s, a, r, n, d in zip(states, actions, rewards, next_states, dones)]
 
-    ret = dict(
-        epoch_reward_min=np.min(epoch_rewards),
-        epoch_reward_max=np.max(epoch_rewards),
-        epoch_reward_mean=np.mean(epoch_rewards),
-        epoch_reward_std=np.std(epoch_rewards),
-        epoch_reward_q25=np.quantile(epoch_rewards, 0.25),
-        epoch_reward_q75=np.quantile(epoch_rewards, 0.75),
+    result = dict(
+        status='',
+        time=0,
+        loading_condition=env.config['load_var'],
+        alphagamma=alpha+gamma
     )
-    print(ret)
-    return ret
+
+    convergence_time = np.where(rewards == 1)[0]
+    if len(np.where(rewards == 1)[0]) > 0:
+        convergence_time = convergence_time[0]
+        result['status'] = 'converged'
+        result['time'] = convergence_time
+        experiences = experiences[:convergence_time + 1]
+    else:
+        if len(np.where(rewards == -1)[0]) > 0:
+            result['status'] = 'diverged'
+        else:
+            result['status'] = 'running'
+
+    return result, experiences
+
+
+def fitness(envs, alpha, beta, gamma, c):
+    print(f'Calculating fitness for alpha={alpha}, beta={beta}, gamma={gamma}, c={c}')
+
+    with multiprocessing.pool.ThreadPool(processes=len(envs)) as pool:
+        trajectories = pool.map(
+            lambda env: get_trajectory(env, alpha, beta, gamma, c), envs)
+
+    print(f'Converged Ratio: {sum([1 for t in trajectories if t[0]["status"] == "converged"])}/{env_config["epochs"]} - Average time: {np.mean([t[0]["time"] for t in trajectories if t[0]["status"] == "converged"])}')
+    return pd.DataFrame([t[0] for t in trajectories]), [item for t in trajectories for item in t[1]]
 
 
 # These happened to be the best hyper-parameters. Reward: -0.785176
@@ -168,23 +190,19 @@ def main():
 
 
 def plot():
-    env = RemoteEnv('localhost', 6985, env_config)
-    n_points = 50
-    ratios = np.linspace(-0.25, 0.25, n_points)
-    rewards = [0 for _ in range(n_points)]
-    for i, ratio in enumerate(ratios):
-        rewards[i] = fitness(env, -10.0,
-                             -10.0,
-                             ratio + 10.0,
-                             4.039414574158694,
-                             1
-                             )['epoch_reward_mean']
-        if rewards[i] > 100:
-            rewards[i] = -1
+    with multiprocessing.pool.ThreadPool(processes=env_config['epochs']) as pool:
+        envs = pool.map(lambda loading: RemoteEnv('localhost', 6985, (lambda d: d.update(dict(load_var=loading)) or d)(env_config.copy())),
+                        np.linspace(0.8, 1.2, env_config['epochs']))
 
-    plt.plot(ratios, rewards)
-    plt.savefig('restricted-ration-range.png')
-    plt.show()
+    print('All envs created')
+    n_points = 50
+    ratios = np.linspace(-0.6, 0.6, n_points)
+    trajectories = [fitness(envs, -10.0, -10.0, ratio + 10.0, 4.039414574158694) for ratio in ratios]
+
+    results = pd.concat([t[0] for t in trajectories])
+    experiences = [item for t in trajectories for item in t[1]]
+    results.to_csv(f'hyperparameter_{env_config["system"]}_{env_config["mode"]}_results.csv')
+    pickle.dump(experiences, open(f'hyperparameter_{env_config["system"]}_{env_config["mode"]}_experiences.pkl', 'wb'))
 
 
 if __name__ == '__main__':
